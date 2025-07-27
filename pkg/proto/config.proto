@@ -1,0 +1,20 @@
+syntax = "proto3";
+package RainbowIPTVSourceFilter.config;
+
+option go_package = "github.com/ramboll/rainbow-iptv-source-filter/pkg/proto";
+
+message Config {
+  repeated string program_list_source_urls = 1;
+  string program_list_source_file_local_path = 2;
+  string output_file = 3;
+  int64 test_ping_min_latency = 4;
+  int64 test_load_min_speed = 5;
+  int64 retry_times = 6;
+  repeated GroupList group_list = 7;
+  string custom_u_a = 8;
+}
+
+message GroupList {
+  string group = 1;
+  repeated string tvg_name = 2;
+}

@@ -1,8 +1,9 @@
 module github.com/rambollwong/rainbow-iptv-source-filter
 
-go 1.23
+go 1.24
 
 require (
+	github.com/rambollwong/rainbowcat v0.0.0-20250728161800-5026734c5e7a
 	github.com/rambollwong/rainbowlog v0.0.7
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.17.0
@@ -18,7 +19,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/rambollwong/rainbowcat v0.0.0-20250206043332-9b571afe68ca // indirect
 	github.com/sagikazarmark/locafero v0.3.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect

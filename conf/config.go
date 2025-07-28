@@ -21,7 +21,7 @@ func InitConfig() error {
 		return err
 	}
 	configPath := viper.GetString("config.path")
-	log.Info().Str("config.path", configPath).Msg("load config file").Done()
+	log.Info().Msg("load config file").Str("config.path", configPath).Done()
 	localPath := viper.GetString("local-path")
 	outputPath := viper.GetString("output")
 

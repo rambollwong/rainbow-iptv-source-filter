@@ -12,6 +12,7 @@ message Config {
   int64 retry_times = 6;
   repeated GroupList group_list = 7;
   string custom_u_a = 8;
+  int64 parallel_executor_num = 9;
 }
 
 message GroupList {

@@ -1,14 +1,19 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"os"
+	"os/signal"
+	"path"
+	"sync"
+	"syscall"
 
 	"github.com/rambollwong/rainbow-iptv-source-filter/conf"
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/filex"
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/httpx"
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/logx"
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/m3u8x"
+	"github.com/rambollwong/rainbowcat/pool"
 	"github.com/rambollwong/rainbowlog/log"
 )
 
@@ -25,13 +30,37 @@ func main() {
 		log.Info().Msg("Use custom UA.").Str("ua", conf.Config.CustomUA).Done()
 	}
 
-	// 1. build target Source
-	targetSource := m3u8x.BuildTargetSource(conf.Config.GroupList)
-	filteredSources := make([]*m3u8x.ProgramListSource, 0, 16)
-	tvgNameGroupMap := m3u8x.MapTvgNameGroup(conf.Config.GroupList)
+	ctx, cancel := context.WithCancel(context.Background())
 
-	// 2. test each of sources
+	go mainLogic(ctx, cancel)
+
+	// Graceful shutdown
+	go func() {
+		signals := make(chan os.Signal, 1)
+		signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-signals:
+			cancel()
+		}
+	}()
+
+	<-ctx.Done()
+}
+
+func mainLogic(ctx context.Context, cancel context.CancelFunc) {
+	// worker pool
+	log.Info().Int64("parallel_executor_num", conf.Config.ParallelExecutorNum).Done()
+	workerPool := pool.NewWorkerPool(int(conf.Config.ParallelExecutorNum), pool.WithContext(ctx))
+	wg := &sync.WaitGroup{}
+
+	newFilteredSources := make([]*m3u8x.ProgramListSource, 0, 16)
+	newFilteredSourcesMutex := &sync.Mutex{}
+
 	localPath := conf.Config.ProgramListSourceFileLocalPath
+	groupList := conf.Config.GroupList
 	if localPath != "" {
 		// search local files
 		log.Info().Msg("Searching local m3u8 files...").Str("path", localPath).Done()
@@ -43,27 +72,33 @@ func main() {
 			log.Info().Msg("Found files").Strs("files", files...).Done()
 		}
 		for _, file := range files {
-			log.Info().Msg("Processing local m3u8 file...").Str("file", file).Done()
-			// read file
-			fileBytes, err := os.ReadFile(file)
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to read file, ignore").Done()
-				continue
+			wg.Add(1)
+			taskFunc := func() {
+				log.Info().Msg("Processing local m3u8 file...").Str("file", file).Done()
+				// read file
+				fileBytes, err := os.ReadFile(file)
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to read file, ignore").Str("file", file).Done()
+					return
+				}
+				//parse file to source
+				newSource := m3u8x.NewProgramListSource()
+				if err := newSource.ParseProgramListSource(fileBytes); err != nil {
+					log.Error().Err(err).Msg("Failed to parse file, ignore").Str("file", file).Done()
+					return
+				}
+
+				m3u8x.FilterTvgNameOfSource(newSource, groupList)
+				newFilteredSourcesMutex.Lock()
+				newFilteredSources = append(newFilteredSources, newSource)
+				newFilteredSourcesMutex.Unlock()
 			}
-			//parse file to source
-			newSource := m3u8x.NewProgramListSource()
-			if err := newSource.ParseProgramListSource(fileBytes); err != nil {
-				log.Error().Err(err).Msg("Failed to parse file, ignore").Done()
-				continue
+			err := workerPool.Submit(taskFunc)
+			if err != nil {
+				log.Fatal().Err(err).Msg("Failed to submit task func").Done()
+				return
 			}
 
-			// test new source
-			filteredSource := m3u8x.TestAndFilterProgramListSource(
-				newSource, tvgNameGroupMap,
-				conf.Config.TestPingMinLatency,
-				conf.Config.TestLoadMinSpeed,
-				conf.Config.RetryTimes)
-			filteredSources = append(filteredSources, filteredSource)
 		}
 	}
 
@@ -72,34 +107,70 @@ func main() {
 		log.Info().Msg("Testing remote m3u8 files...").Strs("urls", sourceUrls...).Done()
 	}
 	for _, sourceUrl := range sourceUrls {
-		log.Info().Msg("Processing remote m3u8 file...").Str("url", sourceUrl).Done()
-		sourceContent, err := httpx.LoadUrlContentWithRetry(sourceUrl, conf.Config.RetryTimes)
+		wg.Add(1)
+		taskFunc := func() {
+			defer wg.Done()
+			log.Info().Msg("Processing remote m3u8 file...").Str("url", sourceUrl).Done()
+			sourceContent, err := httpx.LoadUrlContentWithRetry(sourceUrl, conf.Config.RetryTimes)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to load url, ignore").Done()
+				return
+			}
+			log.Debug().Msg("Loaded url content").Str("url", sourceUrl).Done()
+
+			// parse url to source
+			newSource := m3u8x.NewProgramListSource()
+			if err := newSource.ParseProgramListSource(sourceContent); err != nil {
+				log.Error().Err(err).Msg("Failed to parse url, ignore").Str("url", sourceUrl).Done()
+				return
+			}
+			log.Debug().Msg("Parsed url content").Str("url", sourceUrl).Done()
+			m3u8x.FilterTvgNameOfSource(newSource, groupList)
+			newFilteredSourcesMutex.Lock()
+			newFilteredSources = append(newFilteredSources, newSource)
+			newFilteredSourcesMutex.Unlock()
+		}
+		err := workerPool.Submit(taskFunc)
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to load url, ignore").Done()
-			continue
+			log.Fatal().Err(err).Msg("Failed to submit task func").Done()
+			return
 		}
-		log.Debug().Msg("Loaded url content").Done()
-
-		// parse url to source
-		newSource := m3u8x.NewProgramListSource()
-		if err := newSource.ParseProgramListSource(sourceContent); err != nil {
-			log.Error().Err(err).Msg("Failed to parse url, ignore").Done()
-			continue
-		}
-		log.Debug().Msg("Parsed url content").Done()
-
-		// test new source
-		filteredSource := m3u8x.TestAndFilterProgramListSource(
-			newSource, tvgNameGroupMap,
-			conf.Config.TestPingMinLatency,
-			conf.Config.TestLoadMinSpeed,
-			conf.Config.RetryTimes)
-		fmt.Printf("%+v\n", filteredSource)
-		filteredSources = append(filteredSources, filteredSource)
 	}
+	// wait all tasks done
+	wg.Wait()
 
-	// 3. merger all filtered sources to target
-	m3u8x.MergeProgramListSources(filteredSources, &targetSource)
-	// 4. output to the result file
-	fmt.Printf("%+v\n", targetSource)
+	// merge all filtered sources
+	mergedSource := m3u8x.MergeProgramListSources(newFilteredSources)
+	log.Info().Msg("Merge all sources successfully.").Done()
+
+	// test merged source
+	targetSource := m3u8x.ParallelTestProgramListSource(
+		mergedSource,
+		conf.Config.TestPingMinLatency,
+		conf.Config.TestLoadMinSpeed,
+		conf.Config.RetryTimes,
+		workerPool)
+	log.Info().Msg("All source tests are completed.").Done()
+
+	// fix channel group
+	m3u8x.FixChannelGroup(targetSource, groupList)
+
+	// output to the result file
+	log.Info().Msg("Writing the final source to the file...").
+		Str("output_file", conf.Config.OutputFile).
+		Done()
+	outputBz := m3u8x.OutputProgramListSourceToM3u8Bz(targetSource, groupList)
+	outputFile := path.Join(conf.Config.OutputFile)
+	if path.Ext(outputFile) != ".m3u8" {
+		outputFile += ".m3u8"
+	}
+	err := filex.WriteBytesToFile(outputBz, outputFile)
+	if err != nil {
+		log.Fatal().Msg("Failed to write to file.").Err(err).Done()
+	}
+	log.Info().Msg("The file writing is completed.").Done()
+
+	workerPool.Close()
+	cancel()
+	log.Info().Msg("All done.").Done()
 }

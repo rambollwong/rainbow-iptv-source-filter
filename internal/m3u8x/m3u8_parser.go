@@ -117,7 +117,7 @@ func (c *Channel) readInfoFromLine(line string) error {
 		case "":
 			// ignore
 		default:
-			log.Debug().Msg("Unknown parameter of EXTINF").Str("parameter", infoArr[0]).Done()
+			//log.Debug().Msg("Unknown parameter of EXTINF").Str("parameter", infoArr[0]).Done()
 		}
 	}
 	return nil

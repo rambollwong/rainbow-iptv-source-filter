@@ -36,3 +36,23 @@ func SearchFilesBySuffix(dir string, suffix string) ([]string, error) {
 
 	return files, nil
 }
+
+// WriteBytesToFile writes the given bytes to the specified file path.
+// If the file or its parent directories do not exist, they will be created.
+// Parameters:
+//
+//	data - The byte slice to write to the file
+//	filePath - The path of the file to write to
+//
+// Returns:
+//
+//	error - An error if the write operation fails
+func WriteBytesToFile(data []byte, filePath string) error {
+	// Create parent directories if they don't exist
+	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+		return err
+	}
+
+	// Write data to file
+	return os.WriteFile(filePath, data, 0644)
+}

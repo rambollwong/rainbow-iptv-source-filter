@@ -29,7 +29,7 @@ func MergeProgramListSources(sources []*ProgramListSource) (merged *ProgramListS
 			for _, c := range channels {
 				c := c // Create copy to avoid loop variable capture
 				// Validate TvgName and Title match before proceeding
-				if !checkTvgAndTitle(c.TvgName, c.Title) {
+				if len(c.Title) > 0 && !checkTvgAndTitle(c.TvgName, c.Title) {
 					log.Warn().Msg("TvgName does not match Title, ignoring").
 						Str("tvg_name", c.TvgName).
 						Str("title", c.Title).
@@ -40,7 +40,7 @@ func MergeProgramListSources(sources []*ProgramListSource) (merged *ProgramListS
 				c.Title = c.TvgName
 				// Skip if URL already exists
 				if existUrl.Exist(c.Url) {
-					log.Warn().Msg("Channel url already exists, skip.").
+					log.Debug().Msg("Channel url already exists, skip.").
 						Str("url", c.Url).
 						Done()
 					continue

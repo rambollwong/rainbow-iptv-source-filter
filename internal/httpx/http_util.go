@@ -10,11 +10,11 @@ import (
 var HttpClient = &http.Client{
 	Timeout: time.Second * 5,
 	Transport: &http.Transport{
-		MaxIdleConns:       100,
-		IdleConnTimeout:    90 * time.Second,
-		MaxConnsPerHost:    10,
-		DisableCompression: false,
-		Proxy:              http.ProxyFromEnvironment,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		ResponseHeaderTimeout: time.Second * 10,
+		DisableCompression:    false,
+		Proxy:                 http.ProxyFromEnvironment,
 	},
 }
 
@@ -29,6 +29,7 @@ func LoadUrlContent(url string) (content []byte, err error) {
 		return nil, err
 	}
 	req.Header.Set("User-Agent", UA)
+	req.Header.Set("Accept", "*/*")
 
 	resp, err := HttpClient.Do(req)
 	if err != nil {
@@ -77,23 +78,9 @@ func PingURL(url string) (latency int64, err error) {
 // It returns the download speed in kilobytes per second (KB/s) and any error that occurred during the test.
 // For files larger than 5MB, it downloads the first 5MB to calculate the speed.
 // For smaller files, it downloads the entire file.
-func TestDownloadSpeed(url string) (kbps int64, err error) {
-	// Get file size
-	headResp, err := http.Head(url)
-	if err != nil {
-		return 0, err
-	}
-	defer headResp.Body.Close()
-	if headResp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("request failed, status code: %d", headResp.StatusCode)
-	}
-	fileSize := headResp.ContentLength
-
+func TestDownloadSpeed(url string) (kbps float64, err error) {
 	// Determine the size of data to download
-	testSize := int64(5 * (1 << 20)) // 5MB
-	if fileSize != -1 && fileSize < testSize {
-		testSize = fileSize
-	}
+	testSize := int64(10 * (1 << 20)) // 10MB
 
 	// Send GET request to start downloading
 	getReq, err := http.NewRequest("GET", url, nil)
@@ -101,9 +88,9 @@ func TestDownloadSpeed(url string) (kbps int64, err error) {
 		return 0, err
 	}
 	getReq.Header.Set("User-Agent", UA)
-	if testSize < fileSize || fileSize == -1 {
-		getReq.Header.Set("Range", fmt.Sprintf("bytes=0-%d", testSize-1))
-	}
+	getReq.Header.Set("Accept", "*/*")
+	getReq.Header.Set("Cache-Control", "no-cache")
+
 	getResp, err := HttpClient.Do(getReq)
 	if err != nil {
 		return 0, err
@@ -116,7 +103,7 @@ func TestDownloadSpeed(url string) (kbps int64, err error) {
 	}
 
 	// Create temporary buffer
-	buffer := make([]byte, 16*(1<<10)) // 16KB buffer
+	buffer := make([]byte, 32*1024) // 32KB buffer
 	downloaded := int64(0)
 
 	// Start downloading and timing
@@ -149,7 +136,7 @@ func TestDownloadSpeed(url string) (kbps int64, err error) {
 	elapsedTime := time.Since(start)
 	if elapsedTime > 0 {
 		seconds := elapsedTime.Seconds()
-		kbps = int64(float64(downloaded)/seconds) / (1 << 10)
+		kbps = float64(downloaded) / seconds / 1024
 	}
 	return kbps, nil
 }

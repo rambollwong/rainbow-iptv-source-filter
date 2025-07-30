@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/rambollwong/rainbow-iptv-source-filter/internal/httpx"
 	"github.com/rambollwong/rainbowlog/log"
 )
 
@@ -166,8 +167,21 @@ func (s *LiveStreamSource) ParseLiveStreamSource(source []byte) error {
 			lineNo++
 			file.FileName = strings.TrimSpace(line)
 			s.Files = append(s.Files, file)
+		} else if strings.HasPrefix(line, "#") {
+			log.Debug().Msg("unknown tag of line").Int("line_no", lineNo).Str("line", line).Done()
+		} else if strings.HasSuffix(line, ".m3u8") {
+			urlContent, err := httpx.LoadUrlContent(line)
+			if err != nil {
+				log.Error().Msg("Failed to load channel url, ignore.").
+					Str("channel_url", line).
+					Err(err).
+					Done()
+				return err
+			}
+			s.FileURI = line[:strings.LastIndex(line, "/")]
+			return s.ParseLiveStreamSource(urlContent)
 		} else {
-			log.Warn().Int("line_no", lineNo).Str("line", line).Msg("unknown tag of line").Done()
+			return errors.New("source information is incomplete")
 		}
 	}
 	return nil

@@ -5,4 +5,4 @@ protoc-gen-config:
 	protoc -I ./pkg/proto/ --go_out=paths=source_relative:./pkg/proto ./pkg/proto/*.proto
 
 build:
-	go build -o ./bin/rainbow-iptv-source-filterd ./cmd/main.go
+	go build -o ./bin/rainbow-iptv-source-filterd ./cmd/rainbow-iptv-source-filterd/main.go

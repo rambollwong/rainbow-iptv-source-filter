@@ -66,7 +66,7 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc) {
 		log.Info().Msg("Searching local m3u8 files...").Str("path", localPath).Done()
 		files, err := filex.SearchFilesBySuffix(localPath, ".m3u8")
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to search files, ignore").Done()
+			log.Error().Msg("Failed to search files, ignore").Err(err).Done()
 		}
 		if len(files) > 0 {
 			log.Info().Msg("Found files").Strs("files", files...).Done()
@@ -74,19 +74,23 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc) {
 		for _, file := range files {
 			wg.Add(1)
 			taskFunc := func() {
+				defer wg.Done()
 				log.Info().Msg("Processing local m3u8 file...").Str("file", file).Done()
 				// read file
 				fileBytes, err := os.ReadFile(file)
 				if err != nil {
-					log.Error().Err(err).Msg("Failed to read file, ignore").Str("file", file).Done()
+					log.Error().Msg("Failed to read file, ignore").Str("file", file).Err(err).Done()
 					return
 				}
+				log.Debug().Msg("Loaded local file.").Str("file", file).Done()
+
 				//parse file to source
 				newSource := m3u8x.NewProgramListSource()
 				if err := newSource.ParseProgramListSource(fileBytes); err != nil {
-					log.Error().Err(err).Msg("Failed to parse file, ignore").Str("file", file).Done()
+					log.Error().Msg("Failed to parse file, ignore").Str("file", file).Err(err).Done()
 					return
 				}
+				log.Debug().Msg("Parsed local file.").Str("file", file).Done()
 
 				m3u8x.FilterTvgNameOfSource(newSource, groupList)
 				newFilteredSourcesMutex.Lock()
@@ -113,7 +117,7 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc) {
 			log.Info().Msg("Processing remote m3u8 file...").Str("url", sourceUrl).Done()
 			sourceContent, err := httpx.LoadUrlContentWithRetry(sourceUrl, conf.Config.RetryTimes)
 			if err != nil {
-				log.Error().Err(err).Msg("Failed to load url, ignore").Done()
+				log.Error().Msg("Failed to load url, ignore").Err(err).Done()
 				return
 			}
 			log.Debug().Msg("Loaded url content").Str("url", sourceUrl).Done()
@@ -121,7 +125,7 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc) {
 			// parse url to source
 			newSource := m3u8x.NewProgramListSource()
 			if err := newSource.ParseProgramListSource(sourceContent); err != nil {
-				log.Error().Err(err).Msg("Failed to parse url, ignore").Str("url", sourceUrl).Done()
+				log.Error().Msg("Failed to parse url, ignore").Str("url", sourceUrl).Err(err).Done()
 				return
 			}
 			log.Debug().Msg("Parsed url content").Str("url", sourceUrl).Done()
@@ -149,7 +153,7 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc) {
 		conf.Config.TestPingMinLatency,
 		conf.Config.TestLoadMinSpeed,
 		conf.Config.RetryTimes,
-		workerPool)
+		workerPool, groupList)
 	log.Info().Msg("All source tests are completed.").Done()
 
 	// fix channel group

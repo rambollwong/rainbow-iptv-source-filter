@@ -264,6 +264,7 @@ func getFirstAndLastTsSegmentURL(m3u8URL string) ([]string, error) {
 	}
 	req.Header.Set("User-Agent", httpx.UA)
 	req.Header.Set("Accept", "*/*")
+	req.Header.Set("Cache-Control", "no-cache")
 
 	resp, err := httpx.HttpClient.Do(req)
 	if err != nil {
@@ -330,7 +331,15 @@ func parseTsSegments(m3u8Content, baseURL string) ([]string, error) {
 
 // testFileDownloadSpeed tests the download speed of a specified URL and returns kb/s.
 func testFileDownloadSpeed(fileURL string, maxDownloadSize int64) (float64, error) {
-	resp, err := httpx.HttpClient.Get(fileURL)
+	req, err := http.NewRequest("GET", fileURL, nil)
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Set("User-Agent", httpx.UA)
+	req.Header.Set("Accept", "*/*")
+	req.Header.Set("Cache-Control", "no-cache")
+
+	resp, err := httpx.HttpClient.Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("failed to load ts file")
 	}

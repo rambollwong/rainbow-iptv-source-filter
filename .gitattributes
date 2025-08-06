@@ -1,0 +1,11 @@
+.github/ export-ignore
+.gitignore export-ignore
+.goreleaser.yaml export-ignore
+.gitattributes export-ignore
+README.md export-ignore
+makefile export-ignore
+LICENSE export-ignore
+*_test.go export-ignore
+output/ export-ignore
+log/ export-ignore
+bin/ export-ignore

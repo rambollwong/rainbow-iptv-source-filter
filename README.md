@@ -2,7 +2,7 @@
 
 ![](https://ramboll.wang/img/IPTVSourceFilter_LOGO_SD.png)
 
-[中文](./README_CN.md)
+[[中文]](./README_CN.md)
 
 `Rainbow IPTV Source Filter` is a tool for filtering IPTV sources. It can detect and filter out unreachable or poor-quality sources, and merge the available sources into a specified output file.
 

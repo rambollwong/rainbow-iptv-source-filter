@@ -1,6 +1,8 @@
 package conf
 
 import (
+	"path"
+
 	"github.com/rambollwong/rainbow-iptv-source-filter/pkg/proto"
 	"github.com/rambollwong/rainbowlog/log"
 	"github.com/spf13/pflag"
@@ -37,10 +39,10 @@ func InitConfig() error {
 		return err
 	}
 	if localPath != "" {
-		Config.ProgramListSourceFileLocalPath = localPath
+		Config.ProgramListSourceFileLocalPath = path.Join(localPath)
 	}
 	if outputPath != "" {
-		Config.OutputFile = outputPath
+		Config.OutputFile = path.Join(outputPath)
 	}
 
 	return nil

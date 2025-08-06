@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"path"
@@ -15,9 +16,31 @@ import (
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/m3u8x"
 	"github.com/rambollwong/rainbowcat/pool"
 	"github.com/rambollwong/rainbowlog/log"
+	"github.com/spf13/pflag"
+)
+
+var (
+	version string
 )
 
 func main() {
+	if version == "" {
+		version = "dev"
+	}
+	vFlag := pflag.BoolP("version", "v", false, "show version")
+	hFlag := pflag.BoolP("help", "h", false, "show help")
+	pflag.Parse()
+	if *vFlag {
+		fmt.Printf("version: %s\n", version)
+		os.Exit(0)
+	}
+	if *hFlag {
+		printHelp()
+		os.Exit(0)
+	}
+
+	printLogo()
+
 	logx.InitGlobalLogger()
 
 	log.Info().Msg("Starting rainbow-iptv-source-filter").Done()
@@ -177,4 +200,49 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc) {
 	workerPool.Close()
 	cancel()
 	log.Info().Msg("All done.").Done()
+}
+
+func printLogo() {
+	logo := `
+
+▗▄▄▄▖▗▄▄▖▗▄▄▄▖▗▖  ▗▖     ▗▄▄▖ ▗▄▖ ▗▖ ▗▖▗▄▄▖  ▗▄▄▖▗▄▄▄▖    ▗▄▄▄▖▗▄▄▄▖▗▖ ▗▄▄▄▖▗▄▄▄▖▗▄▄▖ 
+  █  ▐▌ ▐▌ █  ▐▌  ▐▌    ▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌       ▐▌     █  ▐▌   █  ▐▌   ▐▌ ▐▌
+  █  ▐▛▀▘  █  ▐▌  ▐▌     ▝▀▚▖▐▌ ▐▌▐▌ ▐▌▐▛▀▚▖▐▌   ▐▛▀▀▘    ▐▛▀▀▘  █  ▐▌   █  ▐▛▀▀▘▐▛▀▚▖
+▗▄█▄▖▐▌    █   ▝▚▞▘     ▗▄▄▞▘▝▚▄▞▘▝▚▄▞▘▐▌ ▐▌▝▚▄▄▖▐▙▄▄▖    ▐▌   ▗▄█▄▖▐▙▄▄▖█  ▐▙▄▄▖▐▌ ▐▌
+--------------------------------------------------------------------------------------
+Version: %s
+
+
+`
+	fmt.Printf(logo, version)
+}
+
+func printHelp() {
+	helpText := fmt.Sprintf(`Usage: rainbow-iptv-source-filterd [options]
+
+Options:
+  -v, --version          Show version information
+  -h, --help             Show this help message
+  -c, --config.path      Config file path (default "./conf")
+  -l, --local-path       Path of local program list source file
+  -o, --output           Output file path
+
+Description:
+  This tool filters and processes IPTV source lists in M3U8 format. It can read from local files or remote URLs, test stream availability, and generate a merged, filtered output.
+
+Configuration:
+  The tool reads configuration from a YAML file. Please ensure the config file is properly set up before running.
+
+Examples:
+  rainbow-iptv-source-filterd              				# Run with default settings
+  rainbow-iptv-source-filterd -v           				# Show version
+  rainbow-iptv-source-filterd -h           				# Show this help
+  rainbow-iptv-source-filterd -c ./config  				# Specify config path
+  rainbow-iptv-source-filterd -l ./sources 				# Specify local source path
+  rainbow-iptv-source-filterd -o ./result  				# Specify output path
+  rainbow-iptv-source-filterd -c ./config -o ./result  	# Specify config path and output path
+
+For more information, please visit the project repository.
+`)
+	fmt.Print(helpText)
 }

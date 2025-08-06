@@ -21,4 +21,5 @@ _test
 log
 output
 bin
-dist
+# Added by goreleaser init:
+dist/

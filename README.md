@@ -168,6 +168,11 @@ Thanks to the following repositories for providing live source data support:
 
 If you like this project, feel free to buy the author a cup of lemonade ☕️. Your support is my motivation for continuous updates!
 
-- WeChat Pay: ![](https://ramboll.wang/img/wechat_pay.jpg)
-- Alipay: ![](https://ramboll.wang/img/ali_pay.jpg)
+- WeChat Pay: 
+
+<img src="https://ramboll.wang/img/wechat_pay.jpg" alt="WeChat Pay" width="200"/>
+
+- Alipay: 
+
+<img src="https://ramboll.wang/img/ali_pay.jpg" alt="Alipay" width="200"/>
 

@@ -168,6 +168,11 @@ rainbowlog:
 
 如果你喜欢这个项目，欢迎请作者喝杯柠檬水 ☕️，你的支持是我持续更新的动力！
 
-- 微信支付：![](https://ramboll.wang/img/wechat_pay.jpg)
-- 支付宝：![](https://ramboll.wang/img/ali_pay.jpg)
+- 微信支付：
+
+<img src="https://ramboll.wang/img/wechat_pay.jpg" alt="WeChat Pay" width="200"/>
+
+- 支付宝：
+
+<img src="https://ramboll.wang/img/ali_pay.jpg" alt="Alipay" width="200"/>
 

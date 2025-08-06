@@ -51,6 +51,8 @@ rainbow-iptv-source-filterd.exe -c ./conf
 在运行过程中，可能会出现红色的 `ERR` 日志，只要程序未退出，均为正常现象。  
 程序运行结束后，将输出 `All Done.` 字样。
 
+![](https://ramboll.wang/img/RainbowIPTVSourceFilter_log_alldone_snip.png)
+
 ## ⚙️ 配置文件说明
 
 ```yaml

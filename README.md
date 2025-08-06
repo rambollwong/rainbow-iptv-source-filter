@@ -51,6 +51,8 @@ If the configuration is correct, the program will start running and output logs,
 During the running process, red `ERR` logs may appear. As long as the program does not exit, this is normal.  
 After the program finishes running, it will output the message `All Done.`.
 
+![](https://ramboll.wang/img/RainbowIPTVSourceFilter_log_alldone_snip.png)
+
 ## ⚙️ Configuration File Description
 
 ```yaml

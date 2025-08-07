@@ -2,12 +2,13 @@ programListSourceUrls: # 网络直播源列表
   - https://raw.githubusercontent.com/kimwang1978/collect-tv-txt/refs/heads/main/bbxx_lite.m3u
   - https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u
   - https://raw.githubusercontent.com/yuanzl77/IPTV/main/live.m3u
+  - https://raw.githubusercontent.com/Mursor/LIVE/refs/heads/main/iptv.m3u
   - http://live.zbds.top/tv/iptv4.m3u
   - http://live.zbds.top/tv/iptv6.m3u
 programListSourceFileLocalPath: path/to/local/files # 本地直播源文件所在目录
 outputFile: ./output/result.m3u8 # 输出文件名
 testPingMinLatency: 5000 # 每个节目单地址的最低访问延迟， 单位ms
-testLoadMinSpeed: 800 # 每个直播源的最低读取速度 kb/s, 低于该值的源将被过滤掉
+testLoadMinSpeed: 1024 # 每个直播源的最低读取速度 kb/s, 低于该值的源将被过滤掉
 retryTimes: 3 # 访问失败后的重试次数
 customUA: # 自定义UA
 parallelExecutorNum: 50 # 并发执行测试器的数量，如果你的电脑性能不错且网络带宽足够大，可以尝试调高该值，反之调低

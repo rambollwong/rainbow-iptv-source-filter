@@ -161,7 +161,7 @@ rainbowlog:
 ## 部分实现细节
 
 1. 在测试过程中，本工具会自动过滤掉 URL 中包含 `audio` 关键词的源。这是因为此类源通常为音频流，而非视频直播流，不适用于本工具的目标场景。
-2. 当前版本中，若某个源的 `tvg-name` 与 `title` 不一致，该源也会被过滤。此行为将在后续版本中调整，未来将统一以 `tvg-name` 作为匹配标准。
+2. ~~当前版本中，若某个源的 `tvg-name` 与 `title` 不一致，该源也会被过滤。此行为将在后续版本中调整，未来将统一以 `tvg-name` 作为匹配标准。~~
 
 ## 📬 联系我们
 
@@ -176,6 +176,7 @@ rainbowlog:
 - [kimwang1978/collect-txt](https://github.com/kimwang1978/collect-txt)
 - [Guovin/iptv-api](https://github.com/Guovin/iptv-api)
 - [yuanzl77/IPTV](https://github.com/yuanzl77/IPTV)
+- [Mursor/LIVE](https://github.com/Mursor/LIVE)
 
 ## 💰 打赏支持
 

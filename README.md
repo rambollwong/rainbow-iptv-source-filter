@@ -161,7 +161,7 @@ rainbowlog:
 ## Implementation Details
 
 1. During the testing process, the tool automatically filters out sources whose URLs contain the keyword `audio`. This is because such sources are typically audio streams rather than video live streams, which do not align with the intended use case of this tool.
-2. In the current version, if a source's `tvg-name` does not match its `title`, that source will also be filtered out. This behavior will be adjusted in future versions, where `tvg-name` will be used uniformly as the matching standard.
+2. ~~In the current version, if a source's `tvg-name` does not match its `title`, that source will also be filtered out. This behavior will be adjusted in future versions, where `tvg-name` will be used uniformly as the matching standard.~~
 
 ## 📬 Contact Us
 
@@ -176,6 +176,7 @@ Thanks to the following repositories for providing live source data support:
 - [kimwang1978/collect-txt](https://github.com/kimwang1978/collect-txt)
 - [Guovin/iptv-api](https://github.com/Guovin/iptv-api)
 - [yuanzl77/IPTV](https://github.com/yuanzl77/IPTV)
+- [Mursor/LIVE](https://github.com/Mursor/LIVE)
 
 ## 💰 Support with a Donation
 

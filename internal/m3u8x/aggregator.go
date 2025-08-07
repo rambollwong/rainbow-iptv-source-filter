@@ -1,8 +1,6 @@
 package m3u8x
 
 import (
-	"strings"
-
 	"github.com/rambollwong/rainbowcat/types"
 	"github.com/rambollwong/rainbowcat/util"
 	"github.com/rambollwong/rainbowlog/log"
@@ -28,16 +26,15 @@ func MergeProgramListSources(sources []*ProgramListSource) (merged *ProgramListS
 			}
 			for _, c := range channels {
 				c := c // Create copy to avoid loop variable capture
-				// Validate TvgName and Title match before proceeding
-				if len(c.Title) > 0 && !checkTvgAndTitle(c.TvgName, c.Title) {
-					log.Warn().Msg("TvgName does not match Title, ignoring").
-						Str("tvg_name", c.TvgName).
+				if c.TvgName == "" {
+					c.TvgName = c.Title
+					log.Debug().Msg("TvgName is empty, use Title as TvgName.").
 						Str("title", c.Title).
+						Str("url", c.Url).
 						Done()
-					continue
+				} else {
+					c.Title = c.TvgName
 				}
-				// Normalize Title to match TvgName
-				c.Title = c.TvgName
 				// Skip if URL already exists
 				if existUrl.Exist(c.Url) {
 					log.Debug().Msg("Channel url already exists, skip.").
@@ -53,14 +50,4 @@ func MergeProgramListSources(sources []*ProgramListSource) (merged *ProgramListS
 		}
 	}
 	return merged
-}
-
-// checkTvgAndTitle validates if a channel's TvgName and Title are semantically equivalent.
-// It normalizes both strings by converting to uppercase and removing hyphens before comparison.
-// Returns true if normalized strings match, false otherwise.
-func checkTvgAndTitle(tvgName, title string) bool {
-	return strings.ReplaceAll(
-		strings.ToUpper(tvgName),
-		"-",
-		"") == strings.ReplaceAll(strings.ToUpper(title), "-", "")
 }

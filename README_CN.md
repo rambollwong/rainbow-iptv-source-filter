@@ -6,6 +6,11 @@
 
 `Rainbow IPTV Source Filter` 是一个用于过滤 IPTV 源的工具。它能够检测并过滤掉不可达或质量较差的源，并将可用的源合并到指定的输出文件中。
 
+## ⚠️ 注意事项
+
+1. 本工具适用于在与 IPTV 播放设备相同的网络环境下，对直播源进行本地可用性测试，并将过滤后的有效源合并到目标文件中。请勿在云服务器或与播放设备网络环境不一致的场景下使用本工具。
+2. 本工具默认使用 `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36` 作为测试访问的 User-Agent（UA）。如需修改，请在配置文件中设置自定义 UA。若使用默认 UA，播放过滤后的源时，可能需要调整播放器的 UA 设置以确保兼容性（例如：天光云影播放器）。
+
 ## ⚠️ 免责声明
 
 1. 本工具仅供学习和研究使用，请勿用于非法用途。严禁复制、修改后进行售卖等商业行为。
@@ -153,10 +158,16 @@ rainbowlog:
     encoder: txt                  # specify the log information format of the log file, 'txt' and 'json' supported.
 ```
 
+## 部分实现细节
+
+1. 在测试过程中，本工具会自动过滤掉 URL 中包含 `audio` 关键词的源。这是因为此类源通常为音频流，而非视频直播流，不适用于本工具的目标场景。
+2. 当前版本中，若某个源的 `tvg-name` 与 `title` 不一致，该源也会被过滤。此行为将在后续版本中调整，未来将统一以 `tvg-name` 作为匹配标准。
+
 ## 📬 联系我们
 
 - 邮箱：`ramboll.wong@hotmail.com`
 - Telegram 技术交流群：[点击加入](https://t.me/+EZ0us2YdjeE3YTk1)
+- 博客：[Ramboll's Blog](https://ramboll.wang)
 
 ## 🙏 鸣谢
 

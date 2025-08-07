@@ -6,6 +6,11 @@
 
 `Rainbow IPTV Source Filter` is a tool for filtering IPTV sources. It can detect and filter out unreachable or poor-quality sources, and merge the available sources into a specified output file.
 
+## ⚠️ Notes
+
+1. This tool is designed to perform local availability tests on live sources within the same network environment as the IPTV playback device, and to merge the filtered valid sources into a target file. Please do not use this tool in scenarios involving cloud servers or environments that do not match the playback device's network.
+2. By default, the tool uses `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36` as the User-Agent (UA) for testing access. To modify it, please set a custom UA in the configuration file. If the default UA is used, you may need to adjust the player's UA settings to ensure compatibility when playing the filtered sources (e.g., Tianguang Yinying player).
+
 ## ⚠️ Disclaimer
 
 1. This tool is for learning and research purposes only. Please do not use it for illegal purposes. Copying, modifying, and selling the tool commercially is strictly prohibited.
@@ -153,10 +158,16 @@ rainbowlog:
     encoder: txt                  # specify the log information format of the log file, 'txt' and 'json' supported.
 ```
 
+## Implementation Details
+
+1. During the testing process, the tool automatically filters out sources whose URLs contain the keyword `audio`. This is because such sources are typically audio streams rather than video live streams, which do not align with the intended use case of this tool.
+2. In the current version, if a source's `tvg-name` does not match its `title`, that source will also be filtered out. This behavior will be adjusted in future versions, where `tvg-name` will be used uniformly as the matching standard.
+
 ## 📬 Contact Us
 
 - Email: `ramboll.wong@hotmail.com`
 - Telegram Technical Discussion Group: [Join Now](https://t.me/+EZ0us2YdjeE3YTk1)
+- Blog：[Ramboll's Blog](https://ramboll.wang)
 
 ## 🙏 Acknowledgments
 

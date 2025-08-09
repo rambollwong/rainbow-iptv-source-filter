@@ -195,7 +195,7 @@ rainbowlog:
   enableRainbowConsole: true      # whether using rainbow colors when printing to console
   timeFormat:                     # the time format of the time in each record, e.g. 'UNIX' or 'UNIXMS' or 'UNIXMICRO' or 'UNIXNANO' or '2006-01-02 15:04:05.000'
   sizeRollingFileConfig:
-    enable: true                 # enable size rolling file
+    enable: false                 # enable size rolling file
     logFilePath: ./log            # the path of log files
     logFileBaseName: rainbow.iptv.source.filter.sr.log  # the base name of log file
     maxBackups: 10                # max log file backups, if it is negative, the file rotating will be disabled
@@ -204,7 +204,7 @@ rainbowlog:
     useBufferedWriter: true       # whether use buffered writer
     writerBufferSize: 4K          # the buffer size of buffered writer
   timeRollingFileConfig:
-    enable: true                 # enable time rolling file
+    enable: false                 # enable time rolling file
     logFilePath: ./log            # the path of log files
     logFileBaseName: rainbow.iptv.source.filter.tr.log  # the base name of log file
     maxBackups: 7                 # max log file backups, if it is negative, the file rotating will be disabled

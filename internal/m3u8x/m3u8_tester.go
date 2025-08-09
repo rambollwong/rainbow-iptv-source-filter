@@ -1,6 +1,8 @@
 package m3u8x
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,6 +21,7 @@ import (
 // and the download speed of channel streams in parallel using a worker pool.
 // It returns a new ProgramListSource containing only the URLs and channels that pass the tests.
 func ParallelTestProgramListSource(
+	ctx context.Context,
 	source *ProgramListSource,
 	minLatency, loadMinSpeed, retryTimes int64,
 	workerPool *pool.WorkerPool, groupList []*proto.GroupList) (filteredSource *ProgramListSource) {
@@ -135,12 +138,15 @@ func ParallelTestProgramListSource(
 							return
 						}
 						if strings.HasSuffix(u.Path, ".m3u8") {
-							if !TestM3u8DownloadSpeedWithRetry(ch.Url, float64(loadMinSpeed), retryTimes) {
+							if !TestM3u8DownloadSpeedWithRetry(ctx, ch.Url, float64(loadMinSpeed), retryTimes) {
 								return
 							}
 						} else {
-							speed, err := httpx.TestDownloadSpeed(ch.Url)
+							speed, err := httpx.TestDownloadSpeed(ctx, ch.Url)
 							if err != nil {
+								if errors.Is(err, context.Canceled) {
+									return
+								}
 								log.Error().Msg("Failed to test channel url load speed, ignore.").
 									Str("tvg_name", tvgName).
 									Str("channel_url", ch.Url).
@@ -151,6 +157,7 @@ func ParallelTestProgramListSource(
 								log.Warn().Msg("Channel url load speed is too low, ignore.").
 									Str("tvg_name", tvgName).
 									Str("channel_url", ch.Url).
+									Float64("speed", speed).
 									Done()
 								return
 							}
@@ -169,9 +176,11 @@ func ParallelTestProgramListSource(
 
 				// Submit the channel test function to the worker pool
 				if err := workerPool.Submit(testFunc); err != nil {
-					log.Fatal().Msg("Failed to submit test task").
-						Err(err).
-						Done()
+					if !errors.Is(err, pool.ErrWorkerPoolClosed) && !errors.Is(err, pool.ErrWorkerPoolClosing) {
+						log.Warn().Msg("Failed to submit test task").
+							Err(err).
+							Done()
+					}
 				}
 			}
 
@@ -186,10 +195,13 @@ func ParallelTestProgramListSource(
 // TestM3u8DownloadSpeed tests the download speed of media data corresponding to an m3u8 URL.
 // Input: Network URL of the m3u8 file and the required minimum download speed (kb/s).
 // Output: Returns true if any ts segment meets the speed requirement, otherwise returns false; along with possible error.
-func TestM3u8DownloadSpeed(m3u8URL string, requiredSpeed float64) bool {
+func TestM3u8DownloadSpeed(ctx context.Context, m3u8URL string, requiredSpeed float64) bool {
 	// Download and parse the m3u8 file to get .ts segment URLs (first and last one)
-	tsURLs, err := getFirstAndLastTsSegmentURL(m3u8URL)
+	tsURLs, err := getFirstAndLastTsSegmentURL(ctx, m3u8URL)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return false
+		}
 		log.Error().Msg("Failed to download m3u8 file, ignore.").
 			Str("m3u8_url", m3u8URL).Err(err).
 			Done()
@@ -200,8 +212,11 @@ func TestM3u8DownloadSpeed(m3u8URL string, requiredSpeed float64) bool {
 	const maxTestSize = 10 * 1024 * 1024 // 10MB
 	var totalSpeed float64
 	for _, tsURL := range tsURLs {
-		speed, err := testFileDownloadSpeed(tsURL, maxTestSize)
+		speed, err := testFileDownloadSpeed(ctx, tsURL, maxTestSize)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return false
+			}
 			log.Error().Msg("Failed to test file download speed, skip this file.").
 				Str("m3u8_url", m3u8URL).
 				Str("file_url", tsURL).Err(err).
@@ -238,11 +253,11 @@ func TestM3u8DownloadSpeed(m3u8URL string, requiredSpeed float64) bool {
 // TestM3u8DownloadSpeedWithRetry tests the download speed of an m3u8 URL with retry logic.
 // It attempts to test the download speed up to retryTimes+1 times (1 initial attempt + retryTimes retries).
 // Returns true if the test passes within the required speed at least once, otherwise returns false.
-func TestM3u8DownloadSpeedWithRetry(m3u8URL string, requiredSpeed float64, retryTimes int64) bool {
+func TestM3u8DownloadSpeedWithRetry(ctx context.Context, m3u8URL string, requiredSpeed float64, retryTimes int64) bool {
 	var i int64
 	for {
 		i++
-		if TestM3u8DownloadSpeed(m3u8URL, requiredSpeed) {
+		if TestM3u8DownloadSpeed(ctx, m3u8URL, requiredSpeed) {
 			return true
 		}
 		if i > retryTimes {
@@ -256,9 +271,9 @@ func TestM3u8DownloadSpeedWithRetry(m3u8URL string, requiredSpeed float64, retry
 }
 
 // getFirstAndLastTsSegmentURL extracts the first and last valid .ts segment URLs from an m3u8 file.
-func getFirstAndLastTsSegmentURL(m3u8URL string) ([]string, error) {
+func getFirstAndLastTsSegmentURL(ctx context.Context, m3u8URL string) ([]string, error) {
 	// Download m3u8 file content
-	req, err := http.NewRequest("GET", m3u8URL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", m3u8URL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +291,7 @@ func getFirstAndLastTsSegmentURL(m3u8URL string) ([]string, error) {
 		return nil, fmt.Errorf("request failed, status code: %d", resp.StatusCode)
 	}
 
-	m3u8Content, err := httpx.LoadUrlContent(m3u8URL)
+	m3u8Content, err := httpx.LoadUrlContent(ctx, m3u8URL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load content: %v", err.Error())
 	}
@@ -330,8 +345,8 @@ func parseTsSegments(m3u8Content, baseURL string) ([]string, error) {
 }
 
 // testFileDownloadSpeed tests the download speed of a specified URL and returns kb/s.
-func testFileDownloadSpeed(fileURL string, maxDownloadSize int64) (float64, error) {
-	req, err := http.NewRequest("GET", fileURL, nil)
+func testFileDownloadSpeed(ctx context.Context, fileURL string, maxDownloadSize int64) (float64, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", fileURL, nil)
 	if err != nil {
 		return 0, err
 	}

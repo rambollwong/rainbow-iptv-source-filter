@@ -3,6 +3,7 @@
 .goreleaser.yaml export-ignore
 .gitattributes export-ignore
 README.md export-ignore
+README_CN.md export-ignore
 makefile export-ignore
 #LICENSE export-ignore
 *_test.go export-ignore

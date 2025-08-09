@@ -3,8 +3,8 @@ module github.com/rambollwong/rainbow-iptv-source-filter
 go 1.24
 
 require (
-	github.com/rambollwong/rainbowcat v0.0.0-20250728161800-5026734c5e7a
-	github.com/rambollwong/rainbowlog v0.0.7
+	github.com/rambollwong/rainbowcat v0.0.0-20250809122801-1b1920df4b54
+	github.com/rambollwong/rainbowlog v0.0.10
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.10.0

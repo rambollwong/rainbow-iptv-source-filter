@@ -8,7 +8,7 @@ programListSourceUrls: # 网络直播源列表
 programListSourceFileLocalPath: path/to/local/files # 本地直播源文件所在目录
 outputFile: ./output/result.m3u8 # 输出文件名
 testPingMinLatency: 5000 # 每个节目单地址的最低访问延迟， 单位ms
-testLoadMinSpeed: 1024 # 每个直播源的最低读取速度 kb/s, 低于该值的源将被过滤掉
+testLoadMinSpeed: 800 # 每个直播源的最低读取速度 kb/s, 低于该值的源将被过滤掉
 retryTimes: 3 # 访问失败后的重试次数
 customUA: # 自定义UA
 parallelExecutorNum: 50 # 并发执行测试器的数量，如果你的电脑性能不错且网络带宽足够大，可以尝试调高该值，反之调低
@@ -195,16 +195,20 @@ rainbowlog:
   enableRainbowConsole: true      # whether using rainbow colors when printing to console
   timeFormat:                     # the time format of the time in each record, e.g. 'UNIX' or 'UNIXMS' or 'UNIXMICRO' or 'UNIXNANO' or '2006-01-02 15:04:05.000'
   sizeRollingFileConfig:
-    enable: false                 # enable size rolling file
+    enable: true                 # enable size rolling file
     logFilePath: ./log            # the path of log files
-    logFileBaseName: rainbow.iptv.source.filter.log  # the base name of log file
+    logFileBaseName: rainbow.iptv.source.filter.sr.log  # the base name of log file
     maxBackups: 10                # max log file backups, if it is negative, the file rotating will be disabled
     fileSizeLimit: 100M           # the max size of each log file, it is valid when MaxBackups is not negative
     encoder: txt                  # specify the log information format of the log file, 'txt' and 'json' supported.
+    useBufferedWriter: true       # whether use buffered writer
+    writerBufferSize: 4K          # the buffer size of buffered writer
   timeRollingFileConfig:
-    enable: false                 # enable time rolling file
+    enable: true                 # enable time rolling file
     logFilePath: ./log            # the path of log files
-    logFileBaseName: rainbow.iptv.source.filter.log  # the base name of log file
+    logFileBaseName: rainbow.iptv.source.filter.tr.log  # the base name of log file
     maxBackups: 7                 # max log file backups, if it is negative, the file rotating will be disabled
     rollingPeriod: DAY            # the rolling time period for rotating log file, e.g. 'YEAR' or 'MONTH' or 'DAY' or 'HOUR' or 'MINUTE' or 'SECOND'
     encoder: txt                  # specify the log information format of the log file, 'txt' and 'json' supported.
+    useBufferedWriter: true       # whether use buffered writer
+    writerBufferSize: 4K          # the buffer size of buffered writer

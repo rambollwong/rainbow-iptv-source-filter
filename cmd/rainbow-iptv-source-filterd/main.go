@@ -42,6 +42,11 @@ func main() {
 	printLogo()
 
 	logx.InitGlobalLogger()
+	defer func() {
+		if err := log.Logger.Flush(); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Failed to flush log: %v\n", err)
+		}
+	}()
 
 	log.Info().Msg("Starting rainbow-iptv-source-filter").Done()
 
@@ -54,8 +59,10 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	workerPool := pool.NewWorkerPool(int(conf.Config.ParallelExecutorNum), pool.WithContext(ctx))
+	defer workerPool.Close()
 
-	go mainLogic(ctx, cancel)
+	go mainLogic(ctx, cancel, workerPool)
 
 	// Graceful shutdown
 	go func() {
@@ -73,10 +80,10 @@ func main() {
 	<-ctx.Done()
 }
 
-func mainLogic(ctx context.Context, cancel context.CancelFunc) {
+func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.WorkerPool) {
+	defer cancel()
 	// worker pool
 	log.Info().Int64("parallel_executor_num", conf.Config.ParallelExecutorNum).Done()
-	workerPool := pool.NewWorkerPool(int(conf.Config.ParallelExecutorNum), pool.WithContext(ctx))
 	wg := &sync.WaitGroup{}
 
 	newFilteredSources := make([]*m3u8x.ProgramListSource, 0, 16)
@@ -122,7 +129,7 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc) {
 			}
 			err := workerPool.Submit(taskFunc)
 			if err != nil {
-				log.Fatal().Err(err).Msg("Failed to submit task func").Done()
+				log.Debug().Err(err).Msg("Failed to submit task func").Done()
 				return
 			}
 
@@ -138,7 +145,7 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc) {
 		taskFunc := func() {
 			defer wg.Done()
 			log.Info().Msg("Processing remote m3u8 file...").Str("url", sourceUrl).Done()
-			sourceContent, err := httpx.LoadUrlContentWithRetry(sourceUrl, conf.Config.RetryTimes)
+			sourceContent, err := httpx.LoadUrlContentWithRetry(ctx, sourceUrl, conf.Config.RetryTimes)
 			if err != nil {
 				log.Error().Msg("Failed to load url, ignore").Err(err).Done()
 				return
@@ -159,7 +166,7 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc) {
 		}
 		err := workerPool.Submit(taskFunc)
 		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to submit task func").Done()
+			log.Debug().Err(err).Msg("Failed to submit task func").Done()
 			return
 		}
 	}
@@ -172,6 +179,7 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc) {
 
 	// test merged source
 	targetSource := m3u8x.ParallelTestProgramListSource(
+		ctx,
 		mergedSource,
 		conf.Config.TestPingMinLatency,
 		conf.Config.TestLoadMinSpeed,
@@ -196,9 +204,6 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc) {
 		log.Fatal().Msg("Failed to write to file.").Err(err).Done()
 	}
 	log.Info().Msg("The file writing is completed.").Done()
-
-	workerPool.Close()
-	cancel()
 	log.Info().Msg("All done.").Done()
 }
 

@@ -3,6 +3,7 @@ package m3u8x
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -143,7 +144,7 @@ func NewLiveStreamSource(sourceURL string) *LiveStreamSource {
 	}
 }
 
-func (s *LiveStreamSource) ParseLiveStreamSource(source []byte) error {
+func (s *LiveStreamSource) ParseLiveStreamSource(ctx context.Context, source []byte) error {
 	scanner := bufio.NewScanner(bytes.NewReader(source))
 	lineNo := 0
 	for scanner.Scan() {
@@ -170,7 +171,7 @@ func (s *LiveStreamSource) ParseLiveStreamSource(source []byte) error {
 		} else if strings.HasPrefix(line, "#") {
 			log.Debug().Msg("unknown tag of line").Int("line_no", lineNo).Str("line", line).Done()
 		} else if strings.HasSuffix(line, ".m3u8") {
-			urlContent, err := httpx.LoadUrlContent(line)
+			urlContent, err := httpx.LoadUrlContent(ctx, line)
 			if err != nil {
 				log.Error().Msg("Failed to load channel url, ignore.").
 					Str("channel_url", line).
@@ -179,7 +180,7 @@ func (s *LiveStreamSource) ParseLiveStreamSource(source []byte) error {
 				return err
 			}
 			s.FileURI = line[:strings.LastIndex(line, "/")]
-			return s.ParseLiveStreamSource(urlContent)
+			return s.ParseLiveStreamSource(ctx, urlContent)
 		} else {
 			return errors.New("source information is incomplete")
 		}

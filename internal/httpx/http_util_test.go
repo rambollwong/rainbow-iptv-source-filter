@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,7 +10,7 @@ import (
 func TestLoadUrlContent(t *testing.T) {
 	url := "https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u"
 
-	content, err := LoadUrlContent(url)
+	content, err := LoadUrlContent(context.Background(), url)
 
 	require.NoError(t, err, "LoadUrlContent failed")
 	require.NotEmpty(t, content)
@@ -24,7 +25,7 @@ func TestPingURL(t *testing.T) {
 
 func TestTestDownloadSpeed(t *testing.T) {
 	url := "https://download.jetbrains.com/go/goland-2025.1.3-aarch64.dmg"
-	kbps, err := TestDownloadSpeed(url)
+	kbps, err := TestDownloadSpeed(context.Background(), url)
 	require.NoError(t, err, "TestDownloadSpeed failed")
 	require.NotZero(t, kbps)
 }

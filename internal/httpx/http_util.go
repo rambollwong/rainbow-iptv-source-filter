@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,8 +24,8 @@ var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, l
 // LoadUrlContent fetches content from the specified URL and returns it as a byte slice.
 // It handles HTTP request creation, execution, and response body reading.
 // Returns an error if the request fails or the status code is not OK (200).
-func LoadUrlContent(url string) (content []byte, err error) {
-	req, err := http.NewRequest("GET", url, nil)
+func LoadUrlContent(ctx context.Context, url string) (content []byte, err error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -47,9 +48,9 @@ func LoadUrlContent(url string) (content []byte, err error) {
 // LoadUrlContentWithRetry attempts to fetch content from the specified URL with multiple retries.
 // It uses LoadUrlContent internally and retries the request up to retryTimes if errors occur.
 // Returns the content if any attempt succeeds, otherwise returns the last error encountered.
-func LoadUrlContentWithRetry(url string, retryTimes int64) (content []byte, err error) {
+func LoadUrlContentWithRetry(ctx context.Context, url string, retryTimes int64) (content []byte, err error) {
 	for i := int64(0); i < retryTimes; i++ {
-		content, err = LoadUrlContent(url)
+		content, err = LoadUrlContent(ctx, url)
 		if err == nil {
 			return content, nil
 		}
@@ -78,12 +79,12 @@ func PingURL(url string) (latency int64, err error) {
 // It returns the download speed in kilobytes per second (KB/s) and any error that occurred during the test.
 // For files larger than 5MB, it downloads the first 5MB to calculate the speed.
 // For smaller files, it downloads the entire file.
-func TestDownloadSpeed(url string) (kbps float64, err error) {
+func TestDownloadSpeed(ctx context.Context, url string) (kbps float64, err error) {
 	// Determine the size of data to download
 	testSize := int64(10 * (1 << 20)) // 10MB
 
 	// Send GET request to start downloading
-	getReq, err := http.NewRequest("GET", url, nil)
+	getReq, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return 0, err
 	}

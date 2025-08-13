@@ -147,7 +147,7 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.
 			log.Info().Msg("Processing remote m3u8 file...").Str("url", sourceUrl).Done()
 			sourceContent, err := httpx.LoadUrlContentWithRetry(ctx, sourceUrl, conf.Config.RetryTimes)
 			if err != nil {
-				log.Error().Msg("Failed to load url, ignore").Err(err).Done()
+				log.Error().Msg("Failed to load url, ignore").Str("url", sourceUrl).Err(err).Done()
 				return
 			}
 			log.Debug().Msg("Loaded url content").Str("url", sourceUrl).Done()

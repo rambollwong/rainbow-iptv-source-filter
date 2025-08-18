@@ -15,7 +15,6 @@
 
 1. This tool is for learning and research purposes only. Please do not use it for illegal purposes. Copying, modifying, and selling the tool commercially is strictly prohibited.
 2. All live sources in the project come from the internet. If there is any infringement, please contact the author for removal.
-3. **The current version only supports `.m3u8` format files. Support for other formats like `txt` will be considered in future versions.**
 
 ## 📦 Installation
 
@@ -61,12 +60,13 @@ After the program finishes running, it will output the message `All Done.`.
 ## ⚙️ Configuration File Description
 
 ```yaml
-programListSourceUrls: # List of network live sources, multiple sources supported
+programListSourceUrls: # List of network live sources, multiple sources supported, both `.m3u` and `.txt` formats are supported
   - https://raw.githubusercontent.com/kimwang1978/collect-tv-txt/refs/heads/main/bbxx_lite.m3u
   - https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u
+  - https://raw.githubusercontent.com/Guovin/iptv-api/refs/heads/gd/output/result.txt
   - https://raw.githubusercontent.com/yuanzl77/IPTV/main/live.m3u
 programListSourceFileLocalPath: path/to/local/files # Directory of local live source files
-outputFile: ./output/result.m3u8 # Output file path
+outputFile: ./output/result.m3u # Output file path. The tool will determine the output file format based on the file extension. Both `.m3u` and `.txt` formats are supported, with `.m3u` as the default.
 testPingMinLatency: 5000 # Minimum access latency for each program list address (unit: ms)
 testLoadMinSpeed: 800 # Minimum read speed for each live source (unit: kb/s), sources below this value will be filtered out
 retryTimes: 3 # Number of retries after access failure
@@ -162,6 +162,7 @@ rainbowlog:
 
 1. During the testing process, the tool automatically filters out sources whose URLs contain the keyword `audio`. This is because such sources are typically audio streams rather than video live streams, which do not align with the intended use case of this tool.
 2. ~~In the current version, if a source's `tvg-name` does not match its `title`, that source will also be filtered out. This behavior will be adjusted in future versions, where `tvg-name` will be used uniformly as the matching standard.~~
+3. All channel names `tvg-name` will be converted to uppercase, and the `-` character will be removed.
 
 ## 📬 Contact Us
 

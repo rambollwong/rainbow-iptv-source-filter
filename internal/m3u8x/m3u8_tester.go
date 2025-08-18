@@ -32,6 +32,10 @@ func ParallelTestProgramListSource(
 
 	// Test each XTvgUrl for latency
 	for _, tvgUrl := range source.XTvgUrls {
+		if tvgUrl == "" {
+			continue
+		}
+
 		wg.Add(1)
 		testFunc := func() {
 			defer wg.Done()

@@ -22,7 +22,6 @@ func MergeProgramListSources(sources []*ProgramListSource) (merged *ProgramListS
 			ch, ok := merged.TvgNameChannels[tvgName]
 			if !ok {
 				ch = make([]*Channel, 0, 16)
-				merged.TvgNameChannels[tvgName] = ch
 			}
 			for _, c := range channels {
 				c := c // Create copy to avoid loop variable capture
@@ -45,8 +44,8 @@ func MergeProgramListSources(sources []*ProgramListSource) (merged *ProgramListS
 				// Add URL to set and append channel
 				existUrl.Put(c.Url)
 				ch = append(ch, c)
-				merged.TvgNameChannels[tvgName] = ch
 			}
+			merged.TvgNameChannels[tvgName] = ch
 		}
 	}
 	return merged

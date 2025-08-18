@@ -80,9 +80,13 @@ func OutputProgramListSourceToM3u8Bz(source *ProgramListSource, groupList []*pro
 			}
 			for _, channel := range channels {
 				// Format each channel line according to M3U8 specification
-				channelLine := fmt.Sprintf("#EXTINF:-1 tvg-id=\"%d\" tvg-name=\"%s\" tvg-logo=\"%s\" group-title=\"%s\",%s\n%s\n",
-					tvgId, channel.TvgName, channel.TvgLogo, group, channel.Title, channel.Url)
-				b.WriteString(channelLine)
+				if channel.TvgLogo == "" {
+					b.WriteString(fmt.Sprintf("#EXTINF:-1 tvg-id=\"%d\" tvg-name=\"%s\" group-title=\"%s\",%s\n%s\n",
+						tvgId, channel.TvgName, group, channel.Title, channel.Url))
+				} else {
+					b.WriteString(fmt.Sprintf("#EXTINF:-1 tvg-id=\"%d\" tvg-name=\"%s\" tvg-logo=\"%s\" group-title=\"%s\",%s\n%s\n",
+						tvgId, channel.TvgName, channel.TvgLogo, group, channel.Title, channel.Url))
+				}
 			}
 		}
 	}

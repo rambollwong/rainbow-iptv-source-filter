@@ -61,6 +61,7 @@ func OutputTvgNameChannelsToTxtBz(txt TvgNameChannels, groupList []*proto.GroupL
 
 	for _, list := range groupList {
 		group := list.Group
+		b.WriteString("\n")
 		b.WriteString(group)
 		b.WriteString(",")
 		b.WriteString(TxtGenre)

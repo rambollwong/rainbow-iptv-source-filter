@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/httpx"
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/logx"
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/m3u8x"
+	"github.com/rambollwong/rainbow-iptv-source-filter/internal/txtx"
 	"github.com/rambollwong/rainbowcat/pool"
 	"github.com/rambollwong/rainbowcat/util"
 	"github.com/rambollwong/rainbowlog/log"
@@ -22,6 +24,12 @@ import (
 
 var (
 	version string
+)
+
+const (
+	ExtTxt  = ".txt"
+	ExtM3u8 = ".m3u8"
+	ExtM3u  = ".m3u"
 )
 
 func main() {
@@ -94,8 +102,8 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.
 	groupList := conf.Config.GroupList
 	if localPath != "" {
 		// search local files
-		log.Info().Msg("Searching local m3u/m3u8 files...").Str("path", localPath).Done()
-		files, err := filex.SearchFilesBySuffix(localPath, ".m3u8", ".m3u")
+		log.Info().Msg("Searching local m3u/m3u8/txt files...").Str("path", localPath).Done()
+		files, err := filex.SearchFilesBySuffix(localPath, ExtM3u8, ExtM3u, ExtTxt)
 		if err != nil {
 			log.Error().Msg("Failed to search files, ignore").Err(err).Done()
 		}
@@ -106,22 +114,51 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.
 			wg.Add(1)
 			taskFunc := func() {
 				defer wg.Done()
-				log.Info().Msg("Processing local m3u/m3u8 file...").Str("file", file).Done()
-				// read file
-				fileBytes, err := os.ReadFile(file)
-				if err != nil {
-					log.Error().Msg("Failed to read file, ignore").Str("file", file).Err(err).Done()
-					return
-				}
-				log.Debug().Msg("Loaded local file.").Str("file", file).Done()
 
-				//parse file to source
-				newSource := m3u8x.NewProgramListSource()
-				if err := newSource.ParseProgramListSource(fileBytes); err != nil {
-					log.Error().Msg("Failed to parse file, ignore").Str("file", file).Err(err).Done()
+				var fileBytes []byte
+				var newSource *m3u8x.ProgramListSource
+				readFile := func(file string) {
+					fileBytes, err = os.ReadFile(file)
+					if err != nil {
+						log.Error().Msg("Failed to read file, ignore").Str("file", file).Err(err).Done()
+						return
+					}
+					log.Debug().Msg("Loaded local file.").Str("file", file).Done()
+				}
+
+				switch path.Ext(file) {
+				case ExtM3u8, ExtM3u:
+					log.Info().Msg("Processing local m3u/m3u8 file...").Str("file", file).Done()
+					readFile(file)
+					if err != nil {
+						return
+					}
+
+					//parse file to source
+					newSource = m3u8x.NewProgramListSource()
+					if err := newSource.ParseProgramListSource(fileBytes); err != nil {
+						log.Error().Msg("Failed to parse file, ignore").Str("file", file).Err(err).Done()
+						return
+					}
+					log.Debug().Msg("Parsed local file.").Str("file", file).Done()
+				case ExtTxt:
+					log.Info().Msg("Processing local txt file...").Str("file", file).Done()
+					readFile(file)
+					if err != nil {
+						return
+					}
+
+					tncs := txtx.NewTvgNameChannels()
+					tncs.ParseTxt(fileBytes)
+					newSource = txtx.ToM3u(tncs)
+					if len(newSource.TvgNameChannels) == 0 {
+						log.Info().Msg("No channels found in txt file, ignore").Str("file", file).Done()
+						return
+					}
+				default:
+					log.Info().Msg("Unknown file type, ignore").Str("file", file).Done()
 					return
 				}
-				log.Debug().Msg("Parsed local file.").Str("file", file).Done()
 
 				m3u8x.FilterTvgNameOfSource(newSource, groupList)
 				newFilteredSourcesMutex.Lock()
@@ -139,13 +176,13 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.
 
 	sourceUrls := conf.Config.ProgramListSourceUrls
 	if len(sourceUrls) > 0 {
-		log.Info().Msg("Testing remote m3u/m3u8 files...").Strs("urls", sourceUrls...).Done()
+		log.Info().Msg("Testing remote m3u/m3u8/txt files...").Strs("urls", sourceUrls...).Done()
 	}
 	for _, sourceUrl := range sourceUrls {
 		wg.Add(1)
 		taskFunc := func() {
 			defer wg.Done()
-			log.Info().Msg("Processing remote m3u/m3u8 file...").Str("url", sourceUrl).Done()
+			log.Info().Msg("Processing remote m3u/m3u8/txt file...").Str("url", sourceUrl).Done()
 			sourceContent, err := httpx.LoadUrlContentWithRetry(ctx, sourceUrl, conf.Config.RetryTimes)
 			if err != nil {
 				log.Error().Msg("Failed to load url, ignore").Str("url", sourceUrl).Err(err).Done()
@@ -153,13 +190,30 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.
 			}
 			log.Debug().Msg("Loaded url content").Str("url", sourceUrl).Done()
 
-			// parse url to source
-			newSource := m3u8x.NewProgramListSource()
-			if err := newSource.ParseProgramListSource(sourceContent); err != nil {
-				log.Error().Msg("Failed to parse url, ignore").Str("url", sourceUrl).Err(err).Done()
-				return
+			var newSource *m3u8x.ProgramListSource
+			if strings.HasPrefix(string(sourceContent), "#") {
+				// m3u/m3u8
+				log.Info().Msg("Parsing remote m3u/m3u8 file...").Str("url", sourceUrl).Done()
+				// parse url to source
+				newSource = m3u8x.NewProgramListSource()
+				if err := newSource.ParseProgramListSource(sourceContent); err != nil {
+					log.Error().Msg("Failed to parse url, ignore").Str("url", sourceUrl).Err(err).Done()
+					return
+				}
+				log.Debug().Msg("Parsed url content").Str("url", sourceUrl).Done()
+			} else {
+				// txt
+				log.Info().Msg("Parsing remote txt file...").Str("url", sourceUrl).Done()
+				// parse url to source
+				tncs := txtx.NewTvgNameChannels()
+				tncs.ParseTxt(sourceContent)
+				newSource = txtx.ToM3u(tncs)
+				if len(newSource.TvgNameChannels) == 0 {
+					log.Info().Msg("No channels found in remote txt file, ignore").Str("url", sourceUrl).Done()
+					return
+				}
 			}
-			log.Debug().Msg("Parsed url content").Str("url", sourceUrl).Done()
+
 			m3u8x.FilterTvgNameOfSource(newSource, groupList)
 			newFilteredSourcesMutex.Lock()
 			newFilteredSources = append(newFilteredSources, newSource)
@@ -195,10 +249,17 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.
 	log.Info().Msg("Writing the final source to the file...").
 		Str("output_file", conf.Config.OutputFile).
 		Done()
-	outputBz := m3u8x.OutputProgramListSourceToM3u8Bz(targetSource, groupList)
+
 	outputFile := path.Join(conf.Config.OutputFile)
-	if !util.SliceContains([]string{".m3u8", ".m3u"}, path.Ext(outputFile)) {
-		outputFile += ".m3u"
+	var outputBz []byte
+	switch path.Ext(outputFile) {
+	case ExtTxt:
+		outputBz = txtx.OutputTvgNameChannelsToTxtBz(txtx.FromM3u(targetSource), groupList)
+	default:
+		outputBz = m3u8x.OutputProgramListSourceToM3u8Bz(targetSource, groupList)
+		if !util.SliceContains([]string{ExtM3u8, ExtM3u}, path.Ext(outputFile)) {
+			outputFile += ExtM3u
+		}
 	}
 	err := filex.WriteBytesToFile(outputBz, outputFile)
 	if err != nil {

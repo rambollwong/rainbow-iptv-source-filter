@@ -15,7 +15,6 @@
 
 1. 本工具仅供学习和研究使用，请勿用于非法用途。严禁复制、修改后进行售卖等商业行为。
 2. 工程内所有直播源均来自网络，如有侵权，请联系作者删除。
-3. **当前版本仅支持 `.m3u8` 格式文件，后续将考虑支持 `txt` 等其他格式。**
 
 ## 📦 安装方式
 
@@ -61,12 +60,13 @@ rainbow-iptv-source-filterd.exe -c ./conf
 ## ⚙️ 配置文件说明
 
 ```yaml
-programListSourceUrls: # 网络直播源列表，支持多个
+programListSourceUrls: # 网络直播源列表，支持多个，同时支持`,m3u`和`.txt`格式
   - https://raw.githubusercontent.com/kimwang1978/collect-tv-txt/refs/heads/main/bbxx_lite.m3u
   - https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u
+  - https://raw.githubusercontent.com/Guovin/iptv-api/refs/heads/gd/output/result.txt
   - https://raw.githubusercontent.com/yuanzl77/IPTV/main/live.m3u
 programListSourceFileLocalPath: path/to/local/files # 本地直播源文件所在目录
-outputFile: ./output/result.m3u8 # 输出文件路径
+outputFile: ./output/result.m3u # 输出文件路径，工具会根据文件后缀来确定输出文件格式，支持`.m3u`和`.txt`格式，默认为 `.m3u`
 testPingMinLatency: 5000 # 每个节目单地址的最低访问延迟（单位：ms）
 testLoadMinSpeed: 800 # 每个直播源的最低读取速度（单位：kb/s），低于该值的源将被过滤
 retryTimes: 3 # 访问失败后的重试次数
@@ -162,6 +162,7 @@ rainbowlog:
 
 1. 在测试过程中，本工具会自动过滤掉 URL 中包含 `audio` 关键词的源。这是因为此类源通常为音频流，而非视频直播流，不适用于本工具的目标场景。
 2. ~~当前版本中，若某个源的 `tvg-name` 与 `title` 不一致，该源也会被过滤。此行为将在后续版本中调整，未来将统一以 `tvg-name` 作为匹配标准。~~
+3. 所有频道名`tvg-name`都将被转换为大写，并去除`-`字符。
 
 ## 📬 联系我们
 

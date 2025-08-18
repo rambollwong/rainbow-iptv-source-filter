@@ -6,7 +6,7 @@ programListSourceUrls: # 网络直播源列表
   - http://live.zbds.top/tv/iptv4.m3u
   - http://live.zbds.top/tv/iptv6.m3u
 programListSourceFileLocalPath: path/to/local/files # 本地直播源文件所在目录
-outputFile: ./output/result.m3u8 # 输出文件名
+outputFile: ./output/result.m3u # 输出文件名
 testPingMinLatency: 5000 # 每个节目单地址的最低访问延迟， 单位ms
 testLoadMinSpeed: 800 # 每个直播源的最低读取速度 kb/s, 低于该值的源将被过滤掉
 retryTimes: 3 # 访问失败后的重试次数

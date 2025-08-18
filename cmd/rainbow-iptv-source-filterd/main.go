@@ -15,6 +15,7 @@ import (
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/logx"
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/m3u8x"
 	"github.com/rambollwong/rainbowcat/pool"
+	"github.com/rambollwong/rainbowcat/util"
 	"github.com/rambollwong/rainbowlog/log"
 	"github.com/spf13/pflag"
 )
@@ -93,8 +94,8 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.
 	groupList := conf.Config.GroupList
 	if localPath != "" {
 		// search local files
-		log.Info().Msg("Searching local m3u8 files...").Str("path", localPath).Done()
-		files, err := filex.SearchFilesBySuffix(localPath, ".m3u8")
+		log.Info().Msg("Searching local m3u/m3u8 files...").Str("path", localPath).Done()
+		files, err := filex.SearchFilesBySuffix(localPath, ".m3u8", ".m3u")
 		if err != nil {
 			log.Error().Msg("Failed to search files, ignore").Err(err).Done()
 		}
@@ -105,7 +106,7 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.
 			wg.Add(1)
 			taskFunc := func() {
 				defer wg.Done()
-				log.Info().Msg("Processing local m3u8 file...").Str("file", file).Done()
+				log.Info().Msg("Processing local m3u/m3u8 file...").Str("file", file).Done()
 				// read file
 				fileBytes, err := os.ReadFile(file)
 				if err != nil {
@@ -138,13 +139,13 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.
 
 	sourceUrls := conf.Config.ProgramListSourceUrls
 	if len(sourceUrls) > 0 {
-		log.Info().Msg("Testing remote m3u8 files...").Strs("urls", sourceUrls...).Done()
+		log.Info().Msg("Testing remote m3u/m3u8 files...").Strs("urls", sourceUrls...).Done()
 	}
 	for _, sourceUrl := range sourceUrls {
 		wg.Add(1)
 		taskFunc := func() {
 			defer wg.Done()
-			log.Info().Msg("Processing remote m3u8 file...").Str("url", sourceUrl).Done()
+			log.Info().Msg("Processing remote m3u/m3u8 file...").Str("url", sourceUrl).Done()
 			sourceContent, err := httpx.LoadUrlContentWithRetry(ctx, sourceUrl, conf.Config.RetryTimes)
 			if err != nil {
 				log.Error().Msg("Failed to load url, ignore").Str("url", sourceUrl).Err(err).Done()
@@ -196,8 +197,8 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.
 		Done()
 	outputBz := m3u8x.OutputProgramListSourceToM3u8Bz(targetSource, groupList)
 	outputFile := path.Join(conf.Config.OutputFile)
-	if path.Ext(outputFile) != ".m3u8" {
-		outputFile += ".m3u8"
+	if !util.SliceContains([]string{".m3u8", ".m3u"}, path.Ext(outputFile)) {
+		outputFile += ".m3u"
 	}
 	err := filex.WriteBytesToFile(outputBz, outputFile)
 	if err != nil {

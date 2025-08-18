@@ -1,6 +1,7 @@
 package m3u8x
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -35,7 +36,7 @@ cctv1hd-373.ts
 
 func TestParseLiveStreamSource(t *testing.T) {
 	source := NewLiveStreamSource(baseUrl)
-	err := source.ParseLiveStreamSource(liveStreamSource)
+	err := source.ParseLiveStreamSource(context.Background(), liveStreamSource)
 	require.NoError(t, err, "ParseLiveStreamSource failed")
 }
 

@@ -131,6 +131,8 @@ groupList: # Custom channel groups, only channels defined here will be tested
       - 甘肃卫视
       - 青海卫视
       - 厦门卫视
+hostCustomUA: # Custom UA settings for specific domains/addresses
+  - mursor.ottiptv.cc -> okHttp/Mod-1.0.1
 
 # Log Configuration (recommended to keep default if no special requirements)
 # For details, please refer to rainbowlog: https://github.com/rambollwong/rainbowlog

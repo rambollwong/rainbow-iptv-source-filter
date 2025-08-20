@@ -55,23 +55,23 @@ func (s *ProgramListSource) ParseProgramListSource(source []byte) (err error) {
 			continue
 		}
 
-		if lineNo%2 == 0 {
-			// read info of channel
-			channel := &Channel{}
-			if err = channel.readInfoFromLine(line); err != nil {
-				return err
+		// read info of channel
+		channel := &Channel{}
+		if !channel.readInfoFromLine(line) {
+			log.Warn().Msg("Can not read tvg info from line.").
+				Int("line_no", lineNo).Str("line", line).Done()
+			continue
+		}
+		if scanner.Scan() {
+			line = scanner.Text()
+			lineNo++
+			// read live stream url
+			channel.Url = strings.TrimSpace(line)
+			if dlIdx := strings.Index(channel.Url, "$"); dlIdx != -1 {
+				channel.Url = channel.Url[:dlIdx]
 			}
-			if scanner.Scan() {
-				line = scanner.Text()
-				lineNo++
-				// read live stream url
-				channel.Url = strings.TrimSpace(line)
-				if dlIdx := strings.Index(channel.Url, "$"); dlIdx != -1 {
-					channel.Url = channel.Url[:dlIdx]
-				}
-				s.TvgNameChannels[channel.TvgName] = append(s.TvgNameChannels[channel.TvgName], channel)
+			s.TvgNameChannels[channel.TvgName] = append(s.TvgNameChannels[channel.TvgName], channel)
 
-			}
 		}
 	}
 	return scanner.Err()
@@ -92,13 +92,13 @@ func readXTvgUrlsFromLine(line string) ([]string, error) {
 	return strings.Split(strings.ReplaceAll(arr[1], "\"", ""), ","), nil
 }
 
-func (c *Channel) readInfoFromLine(line string) error {
+func (c *Channel) readInfoFromLine(line string) bool {
+	if !strings.HasPrefix(line, TagExtinf) {
+		return false
+	}
 	arr := strings.Split(line, " ")
 	for i, s := range arr {
 		if i == 0 {
-			if !strings.HasPrefix(s, TagExtinf) {
-				return fmt.Errorf("invalid #EXTINF line: %s", line)
-			}
 			continue
 		}
 
@@ -122,7 +122,7 @@ func (c *Channel) readInfoFromLine(line string) error {
 			//log.Debug().Msg("Unknown parameter of EXTINF").Str("parameter", infoArr[0]).Done()
 		}
 	}
-	return nil
+	return true
 }
 
 type LiveStreamFile struct {

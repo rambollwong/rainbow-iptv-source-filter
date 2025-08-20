@@ -2,6 +2,7 @@ package conf
 
 import (
 	"path"
+	"strings"
 
 	"github.com/rambollwong/rainbow-iptv-source-filter/pkg/proto"
 	"github.com/rambollwong/rainbowlog/log"
@@ -10,12 +11,18 @@ import (
 )
 
 var (
-	Config *proto.Config // Global config
+	Config *config // Global config
 
 	_ = pflag.StringP("config.path", "c", "./conf", "config file path")
 	_ = pflag.StringP("local-path", "l", "", "path of local program list source file")
 	_ = pflag.StringP("output", "o", "", "output file path")
 )
+
+type config struct {
+	*proto.Config
+
+	HostCustomUA map[string]string
+}
 
 func InitConfig() error {
 	pflag.Parse()
@@ -34,15 +41,29 @@ func InitConfig() error {
 		return err
 	}
 
-	Config = &proto.Config{}
-	if err := viper.Unmarshal(Config); err != nil {
+	pConf := &proto.Config{}
+	if err := viper.Unmarshal(pConf); err != nil {
 		return err
 	}
 	if localPath != "" {
-		Config.ProgramListSourceFileLocalPath = path.Join(localPath)
+		pConf.ProgramListSourceFileLocalPath = path.Join(localPath)
 	}
 	if outputPath != "" {
-		Config.OutputFile = path.Join(outputPath)
+		pConf.OutputFile = path.Join(outputPath)
+	}
+
+	Config = &config{
+		Config:       pConf,
+		HostCustomUA: make(map[string]string, len(pConf.HostCustomUA)),
+	}
+
+	for _, s := range pConf.HostCustomUA {
+		arr := strings.Split(strings.TrimSpace(s), "->")
+		if len(arr) != 2 {
+			log.Warn().Msg("invalid host_custom_ua, ignore.").Str("host_custom_ua", s).Done()
+			continue
+		}
+		Config.HostCustomUA[strings.TrimSpace(arr[0])] = strings.TrimSpace(arr[1])
 	}
 
 	return nil

@@ -32,6 +32,7 @@ type Config struct {
 	GroupList                      []*GroupList           `protobuf:"bytes,7,rep,name=group_list,json=groupList,proto3" json:"group_list,omitempty"`
 	CustomUA                       string                 `protobuf:"bytes,8,opt,name=custom_u_a,json=customUA,proto3" json:"custom_u_a,omitempty"`
 	ParallelExecutorNum            int64                  `protobuf:"varint,9,opt,name=parallel_executor_num,json=parallelExecutorNum,proto3" json:"parallel_executor_num,omitempty"`
+	HostCustomUA                   []string               `protobuf:"bytes,10,rep,name=host_custom_u_a,json=hostCustomUA,proto3" json:"host_custom_u_a,omitempty"`
 	unknownFields                  protoimpl.UnknownFields
 	sizeCache                      protoimpl.SizeCache
 }
@@ -129,6 +130,13 @@ func (x *Config) GetParallelExecutorNum() int64 {
 	return 0
 }
 
+func (x *Config) GetHostCustomUA() []string {
+	if x != nil {
+		return x.HostCustomUA
+	}
+	return nil
+}
+
 type GroupList struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Group         string                 `protobuf:"bytes,1,opt,name=group,proto3" json:"group,omitempty"`
@@ -185,7 +193,7 @@ var File_config_proto protoreflect.FileDescriptor
 
 const file_config_proto_rawDesc = "" +
 	"\n" +
-	"\fconfig.proto\x12\x1eRainbowIPTVSourceFilter.config\"\xce\x03\n" +
+	"\fconfig.proto\x12\x1eRainbowIPTVSourceFilter.config\"\xf5\x03\n" +
 	"\x06Config\x127\n" +
 	"\x18program_list_source_urls\x18\x01 \x03(\tR\x15programListSourceUrls\x12K\n" +
 	"#program_list_source_file_local_path\x18\x02 \x01(\tR\x1eprogramListSourceFileLocalPath\x12\x1f\n" +
@@ -199,7 +207,9 @@ const file_config_proto_rawDesc = "" +
 	"group_list\x18\a \x03(\v2).RainbowIPTVSourceFilter.config.GroupListR\tgroupList\x12\x1c\n" +
 	"\n" +
 	"custom_u_a\x18\b \x01(\tR\bcustomUA\x122\n" +
-	"\x15parallel_executor_num\x18\t \x01(\x03R\x13parallelExecutorNum\"<\n" +
+	"\x15parallel_executor_num\x18\t \x01(\x03R\x13parallelExecutorNum\x12%\n" +
+	"\x0fhost_custom_u_a\x18\n" +
+	" \x03(\tR\fhostCustomUA\"<\n" +
 	"\tGroupList\x12\x14\n" +
 	"\x05group\x18\x01 \x01(\tR\x05group\x12\x19\n" +
 	"\btvg_name\x18\x02 \x03(\tR\atvgNameB9Z7github.com/ramboll/rainbow-iptv-source-filter/pkg/protob\x06proto3"

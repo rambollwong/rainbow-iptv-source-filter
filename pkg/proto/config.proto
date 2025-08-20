@@ -13,6 +13,7 @@ message Config {
   repeated GroupList group_list = 7;
   string custom_u_a = 8;
   int64 parallel_executor_num = 9;
+  repeated string host_custom_u_a = 10;
 }
 
 message GroupList {

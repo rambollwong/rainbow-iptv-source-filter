@@ -177,7 +177,7 @@ Thanks to the following repositories for providing live source data support:
 - [kimwang1978/collect-txt](https://github.com/kimwang1978/collect-txt)
 - [Guovin/iptv-api](https://github.com/Guovin/iptv-api)
 - [yuanzl77/IPTV](https://github.com/yuanzl77/IPTV)
-- [Mursor/LIVE](https://github.com/Mursor/LIVE)
+- [mursor1985/LIVE](https://github.com/mursor1985/LIVE)
 
 ## 💰 Support with a Donation
 

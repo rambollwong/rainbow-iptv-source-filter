@@ -24,7 +24,10 @@ func ParallelTestProgramListSource(
 	ctx context.Context,
 	source *ProgramListSource,
 	minLatency, loadMinSpeed, retryTimes int64,
-	workerPool *pool.WorkerPool, groupList []*proto.GroupList) (filteredSource *ProgramListSource) {
+	workerPool *pool.WorkerPool,
+	groupList []*proto.GroupList,
+	hostCustomUA map[string]string,
+) (filteredSource *ProgramListSource) {
 	// Initialize the filtered source and synchronization primitives
 	filteredSource = NewProgramListSource()
 	mu := sync.Mutex{}
@@ -116,6 +119,7 @@ func ParallelTestProgramListSource(
 	for _, list := range groupList {
 		for _, tvgName := range list.TvgName {
 			for host, tvgChs := range hostGroupChannels {
+				customUA := hostCustomUA[host]
 				chs, exist := tvgChs[tvgName]
 				if !exist {
 					continue
@@ -142,7 +146,8 @@ func ParallelTestProgramListSource(
 							return
 						}
 						if strings.HasSuffix(u.Path, ".m3u8") {
-							if !TestM3u8DownloadSpeedWithRetry(ctx, ch.Url, float64(loadMinSpeed), retryTimes) {
+							if !TestM3u8DownloadSpeedWithRetry(
+								ctx, ch.Url, customUA, float64(loadMinSpeed), retryTimes) {
 								return
 							}
 						} else {
@@ -199,9 +204,9 @@ func ParallelTestProgramListSource(
 // TestM3u8DownloadSpeed tests the download speed of media data corresponding to an m3u8 URL.
 // Input: Network URL of the m3u8 file and the required minimum download speed (kb/s).
 // Output: Returns true if any ts segment meets the speed requirement, otherwise returns false; along with possible error.
-func TestM3u8DownloadSpeed(ctx context.Context, m3u8URL string, requiredSpeed float64) bool {
+func TestM3u8DownloadSpeed(ctx context.Context, m3u8URL, customUA string, requiredSpeed float64) bool {
 	// Download and parse the m3u8 file to get .ts segment URLs (first and last one)
-	tsURLs, err := getFirstAndLastTsSegmentURL(ctx, m3u8URL)
+	tsURLs, err := getFirstAndLastTsSegmentURL(ctx, m3u8URL, customUA)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return false
@@ -216,7 +221,7 @@ func TestM3u8DownloadSpeed(ctx context.Context, m3u8URL string, requiredSpeed fl
 	const maxTestSize = 10 * 1024 * 1024 // 10MB
 	var totalSpeed float64
 	for _, tsURL := range tsURLs {
-		speed, err := testFileDownloadSpeed(ctx, tsURL, maxTestSize)
+		speed, err := testFileDownloadSpeed(ctx, tsURL, customUA, maxTestSize)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				return false
@@ -257,11 +262,16 @@ func TestM3u8DownloadSpeed(ctx context.Context, m3u8URL string, requiredSpeed fl
 // TestM3u8DownloadSpeedWithRetry tests the download speed of an m3u8 URL with retry logic.
 // It attempts to test the download speed up to retryTimes+1 times (1 initial attempt + retryTimes retries).
 // Returns true if the test passes within the required speed at least once, otherwise returns false.
-func TestM3u8DownloadSpeedWithRetry(ctx context.Context, m3u8URL string, requiredSpeed float64, retryTimes int64) bool {
+func TestM3u8DownloadSpeedWithRetry(
+	ctx context.Context,
+	m3u8URL, customUA string,
+	requiredSpeed float64,
+	retryTimes int64,
+) bool {
 	var i int64
 	for {
 		i++
-		if TestM3u8DownloadSpeed(ctx, m3u8URL, requiredSpeed) {
+		if TestM3u8DownloadSpeed(ctx, m3u8URL, customUA, requiredSpeed) {
 			return true
 		}
 		if i > retryTimes {
@@ -275,13 +285,17 @@ func TestM3u8DownloadSpeedWithRetry(ctx context.Context, m3u8URL string, require
 }
 
 // getFirstAndLastTsSegmentURL extracts the first and last valid .ts segment URLs from an m3u8 file.
-func getFirstAndLastTsSegmentURL(ctx context.Context, m3u8URL string) ([]string, error) {
+func getFirstAndLastTsSegmentURL(ctx context.Context, m3u8URL, customUA string) ([]string, error) {
 	// Download m3u8 file content
 	req, err := http.NewRequestWithContext(ctx, "GET", m3u8URL, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", httpx.UA)
+	if customUA == "" {
+		req.Header.Set("User-Agent", httpx.UA)
+	} else {
+		req.Header.Set("User-Agent", customUA)
+	}
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Cache-Control", "no-cache")
 
@@ -349,12 +363,16 @@ func parseTsSegments(m3u8Content, baseURL string) ([]string, error) {
 }
 
 // testFileDownloadSpeed tests the download speed of a specified URL and returns kb/s.
-func testFileDownloadSpeed(ctx context.Context, fileURL string, maxDownloadSize int64) (float64, error) {
+func testFileDownloadSpeed(ctx context.Context, fileURL, customUA string, maxDownloadSize int64) (float64, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", fileURL, nil)
 	if err != nil {
 		return 0, err
 	}
-	req.Header.Set("User-Agent", httpx.UA)
+	if customUA == "" {
+		req.Header.Set("User-Agent", httpx.UA)
+	} else {
+		req.Header.Set("User-Agent", customUA)
+	}
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Cache-Control", "no-cache")
 

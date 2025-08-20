@@ -131,6 +131,8 @@ groupList: # 自定义频道分组，仅测试定义在此处的频道
       - 甘肃卫视
       - 青海卫视
       - 厦门卫视
+hostCustomUA: # 针对特定域名/地址的UA设置
+  - mursor.ottiptv.cc -> okHttp/Mod-1.0.1
 
 # 日志配置（如无特殊需求，建议保持默认）
 # 详情请参考 rainbowlog：https://github.com/rambollwong/rainbowlog

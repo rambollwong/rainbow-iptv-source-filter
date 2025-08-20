@@ -64,7 +64,10 @@ func main() {
 	}
 	if conf.Config.CustomUA != "" {
 		httpx.UA = conf.Config.CustomUA
-		log.Info().Msg("Use custom UA.").Str("ua", conf.Config.CustomUA).Done()
+		log.Info().Msg("Use global custom UA.").Str("ua", conf.Config.CustomUA).Done()
+	}
+	if len(conf.Config.HostCustomUA) > 0 {
+		log.Info().Msg("Use host custom UA.").Any("host_custom_ua", conf.Config.HostCustomUA).Done()
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -239,7 +242,7 @@ func mainLogic(ctx context.Context, cancel context.CancelFunc, workerPool *pool.
 		conf.Config.TestPingMinLatency,
 		conf.Config.TestLoadMinSpeed,
 		conf.Config.RetryTimes,
-		workerPool, groupList)
+		workerPool, groupList, conf.Config.HostCustomUA)
 	log.Info().Msg("All source tests are completed.").Done()
 
 	// fix channel group

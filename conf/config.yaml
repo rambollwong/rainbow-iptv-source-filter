@@ -2,7 +2,7 @@ programListSourceUrls: # 网络直播源列表
   - https://raw.githubusercontent.com/kimwang1978/collect-tv-txt/refs/heads/main/bbxx_lite.m3u
   - https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u
   - https://raw.githubusercontent.com/yuanzl77/IPTV/main/live.m3u
-  - https://raw.githubusercontent.com/Mursor/LIVE/refs/heads/main/iptv.m3u
+  - https://raw.githubusercontent.com/mursor1985/LIVE/refs/heads/main/iptv.m3u
   - http://live.zbds.top/tv/iptv4.m3u
   - http://live.zbds.top/tv/iptv6.m3u
 programListSourceFileLocalPath: path/to/local/files # 本地直播源文件所在目录
@@ -184,6 +184,8 @@ groupList:
 #      - 游戏风云
 #      - 电竞天堂
 #      - 爱电竞
+hostCustomUA: # 针对特定域名/地址的UA设置
+  - mursor.ottiptv.cc -> okHttp/Mod-1.0.1
 
 # rainbowlog config file
 rainbowlog:

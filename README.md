@@ -75,26 +75,26 @@ parallelExecutorNum: 50 # Number of concurrent test threads, adjustable based on
 groupList: # Custom channel groups, only channels defined here will be tested
   - group: 央视 # Group name
     tvgName: # Channel list (avoid duplicates)
-      - CCTV1
-      - CCTV2
-      - CCTV3
-      - CCTV4
-      - CCTV5
-      - CCTV5+
-      - CCTV6
-      - CCTV7
-      - CCTV8
-      - CCTV9
-      - CCTV10
-      - CCTV11
-      - CCTV12
-      - CCTV13
-      - CCTV14
-      - CCTV15
-      - CCTV16
-      - CCTV17
-      - CCTV4K
-      - CCTV8K
+      - CCTV1,CCTV1综合 # Supports merging multiple channel names, compatible with different live source naming conventions through this method, ultimately outputting the leftmost channel name to the final file
+      - CCTV2,CCTV2财经
+      - CCTV3,CCTV3综艺
+      - CCTV4,CCTV4中文国际
+      - CCTV5,CCTV5体育
+      - CCTV5+,CCTV5+体育赛事
+      - CCTV6,CCTV6电影
+      - CCTV7,CCTV7国防军事,CCTV7军事
+      - CCTV8,CCTV8电视剧
+      - CCTV9,CCTV9纪录
+      - CCTV10,CCTV10科教
+      - CCTV11,CCTV11戏曲
+      - CCTV12,CCTV12社会与法
+      - CCTV13,CCTV13新闻
+      - CCTV14,CCTV14少儿
+      - CCTV15,CCTV15音乐
+      - CCTV16,CCTV16-MST
+      - CCTV17,CCTV17农业农村
+      - CCTV4K,CCTV4KMXW
+      - CCTV8K,CCTV8KMCP
   - group: 卫视
     tvgName:
       - 北京卫视

@@ -75,26 +75,26 @@ parallelExecutorNum: 50 # 并发测试线程数，可根据电脑性能和网络
 groupList: # 自定义频道分组，仅测试定义在此处的频道
   - group: 央视 # 分组名称
     tvgName: # 频道列表（注意不要重复）
-      - CCTV1
-      - CCTV2
-      - CCTV3
-      - CCTV4
-      - CCTV5
-      - CCTV5+
-      - CCTV6
-      - CCTV7
-      - CCTV8
-      - CCTV9
-      - CCTV10
-      - CCTV11
-      - CCTV12
-      - CCTV13
-      - CCTV14
-      - CCTV15
-      - CCTV16
-      - CCTV17
-      - CCTV4K
-      - CCTV8K
+      - CCTV1,CCTV1综合 # 支持多频道名合并，通过这种方式兼容不同直播源的频道命名，最终以最左侧频道名输出到最终文件中
+      - CCTV2,CCTV2财经
+      - CCTV3,CCTV3综艺
+      - CCTV4,CCTV4中文国际
+      - CCTV5,CCTV5体育
+      - CCTV5+,CCTV5+体育赛事
+      - CCTV6,CCTV6电影
+      - CCTV7,CCTV7国防军事,CCTV7军事
+      - CCTV8,CCTV8电视剧
+      - CCTV9,CCTV9纪录
+      - CCTV10,CCTV10科教
+      - CCTV11,CCTV11戏曲
+      - CCTV12,CCTV12社会与法
+      - CCTV13,CCTV13新闻
+      - CCTV14,CCTV14少儿
+      - CCTV15,CCTV15音乐
+      - CCTV16,CCTV16-MST
+      - CCTV17,CCTV17农业农村
+      - CCTV4K,CCTV4KMXW
+      - CCTV8K,CCTV8KMCP
   - group: 卫视
     tvgName:
       - 北京卫视

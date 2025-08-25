@@ -20,9 +20,11 @@ func FilterTvgNameOfSource(source *ProgramListSource, groupList []*proto.GroupLi
 	for _, gl := range groupList {
 		// Iterate through all tvg names within the group
 		for _, tvgName := range gl.TvgName {
-			// Check if the corresponding channel exists in the source
-			if chs, ok := source.TvgNameChannels[tvgName]; ok {
-				newTvgNameGroup[tvgName] = chs
+			for _, tvgName := range splitTvgNames(tvgName) {
+				// Check if the corresponding channel exists in the source
+				if chs, ok := source.TvgNameChannels[tvgName]; ok {
+					newTvgNameGroup[tvgName] = chs
+				}
 			}
 		}
 	}
@@ -91,4 +93,8 @@ func OutputProgramListSourceToM3u8Bz(source *ProgramListSource, groupList []*pro
 		}
 	}
 	return []byte(b.String())
+}
+
+func splitTvgNames(tvgNames string) []string {
+	return strings.Split(strings.ReplaceAll(tvgNames, "，", ","), ",")
 }

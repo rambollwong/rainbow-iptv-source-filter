@@ -75,15 +75,25 @@ func ParallelTestProgramListSource(
 	hostGroupChannels := make(map[string]map[string][]*Channel) // host -> tvgName -> channels
 	for _, list := range groupList {
 		for _, tvgName := range list.TvgName {
+			tvgNames := splitTvgNames(tvgName) // Support merging multiple tvgNames
+			tvgNameMain := tvgNames[0]         // Use the first tvgName as the main tvgName
 			// Initialize the channel slice in the filtered source if it doesn't exist
-			if _, exists := filteredSource.TvgNameChannels[tvgName]; !exists {
-				filteredSource.TvgNameChannels[tvgName] = make([]*Channel, 0, 8)
+			if _, exists := filteredSource.TvgNameChannels[tvgNameMain]; !exists {
+				filteredSource.TvgNameChannels[tvgNameMain] = make([]*Channel, 0, 8)
 			}
-			chs, exist := source.TvgNameChannels[tvgName]
-			if !exist {
+			var chs []*Channel
+			for _, tn := range tvgNames {
+				channels, exist := source.TvgNameChannels[tn]
+				if !exist {
+					continue
+				}
+				chs = append(chs, channels...)
+			}
+			if len(chs) == 0 {
 				continue
 			}
-			log.Info().Int("number_of_channels_waiting_for_testing", len(chs)).Str("tvg_name", tvgName).Done()
+
+			log.Info().Int("number_of_channels_waiting_for_testing", len(chs)).Str("tvg_name", tvgNameMain).Done()
 			// Iterate over each channel for the current tvgName
 			for _, ch := range chs {
 				if strings.Contains(ch.Url, "audio") {
@@ -95,7 +105,7 @@ func ParallelTestProgramListSource(
 				u, err := url.Parse(ch.Url)
 				if err != nil {
 					log.Error().Msg("Failed to parse channel url, ignore.").
-						Str("tvg_name", tvgName).
+						Str("tvg_name", tvgNameMain).
 						Str("channel_url", ch.Url).
 						Done()
 					return
@@ -105,12 +115,12 @@ func ParallelTestProgramListSource(
 				if !exist {
 					hostChannels = make(map[string][]*Channel)
 				}
-				hostTvgChs, exist := hostChannels[ch.TvgName]
+				hostTvgChs, exist := hostChannels[tvgNameMain]
 				if !exist {
 					hostTvgChs = make([]*Channel, 0, 16)
 				}
 				hostTvgChs = append(hostTvgChs, ch)
-				hostChannels[ch.TvgName] = hostTvgChs
+				hostChannels[tvgNameMain] = hostTvgChs
 				hostGroupChannels[host] = hostChannels
 			}
 		}
@@ -118,6 +128,7 @@ func ParallelTestProgramListSource(
 
 	for _, list := range groupList {
 		for _, tvgName := range list.TvgName {
+			tvgName := splitTvgNames(tvgName)[0]
 			for host, tvgChs := range hostGroupChannels {
 				customUA := hostCustomUA[host]
 				chs, exist := tvgChs[tvgName]

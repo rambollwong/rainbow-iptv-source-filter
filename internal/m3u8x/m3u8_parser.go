@@ -93,34 +93,51 @@ func readXTvgUrlsFromLine(line string) ([]string, error) {
 }
 
 func (c *Channel) readInfoFromLine(line string) bool {
-	if !strings.HasPrefix(line, TagExtinf) {
+	var ok bool
+	line, ok = strings.CutPrefix(line, TagExtinf+":-1")
+	if !ok {
 		return false
 	}
-	arr := strings.Split(line, " ")
-	for i, s := range arr {
-		if i == 0 {
-			continue
-		}
 
-		infoArr := strings.Split(s, "=")
-		switch infoArr[0] {
+	kv := make([]string, 0, 10)
+	for {
+		before, after, ok := strings.Cut(line, "=")
+		if !ok {
+			kv = append(kv, before)
+			break
+		}
+		arr := strings.Split(strings.TrimSpace(before), " ")
+		kv = append(kv, arr...)
+		line = after
+	}
+
+	for i := 0; i < len(kv); i++ {
+		switch kv[i] {
 		case "tvg-name":
-			c.TvgName = strings.ReplaceAll(strings.ToUpper(infoArr[1]), "-", "")
+			c.TvgName = strings.ReplaceAll(strings.ToUpper(kv[i+1]), "-", "")
 			c.TvgName = strings.ReplaceAll(c.TvgName, "\"", "")
+			i++
 		case "tvg-logo":
-			c.TvgLogo = strings.ReplaceAll(infoArr[1], "\"", "")
+			c.TvgLogo = strings.ReplaceAll(kv[i+1], "\"", "")
+			i++
 		case "tvg-id":
 			// ignore
+			i++
 		case "group-title":
-			groupTitle := strings.Split(infoArr[1], ",")
-			c.Group, c.Title = groupTitle[0], strings.ToUpper(groupTitle[1])
+			groupTitle := strings.Split(kv[i+1], ",")
+			c.Group, c.Title = strings.TrimSpace(groupTitle[0]), strings.ToUpper(strings.TrimSpace(groupTitle[1]))
 			c.Group = strings.ReplaceAll(c.Group, "\"", "")
 			c.Title = strings.ReplaceAll(c.Title, "\"", "")
+			i++
 		case "":
 			// ignore
 		default:
-			//log.Debug().Msg("Unknown parameter of EXTINF").Str("parameter", infoArr[0]).Done()
+			//log.Debug().Msg("Unknown parameter of EXTINF").Str("parameter", kv[i]).Done()
 		}
+	}
+
+	if len(c.TvgName) == 0 && len(c.Title) > 0 {
+		c.TvgName = c.Title
 	}
 	return true
 }

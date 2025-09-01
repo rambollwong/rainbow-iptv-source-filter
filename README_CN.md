@@ -60,7 +60,7 @@ rainbow-iptv-source-filterd.exe -c ./conf
 ## ⚙️ 配置文件说明
 
 ```yaml
-programListSourceUrls: # 网络直播源列表，支持多个，同时支持`,m3u`和`.txt`格式
+programListSourceUrls: # 网络直播源列表，支持多个，同时支持`.m3u`和`.txt`格式
   - https://raw.githubusercontent.com/kimwang1978/collect-tv-txt/refs/heads/main/bbxx_lite.m3u
   - https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u
   - https://raw.githubusercontent.com/Guovin/iptv-api/refs/heads/gd/output/result.txt

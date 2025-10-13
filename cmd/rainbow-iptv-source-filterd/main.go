@@ -13,7 +13,6 @@ import (
 	"github.com/rambollwong/rainbow-iptv-source-filter/conf"
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/filex"
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/httpx"
-	"github.com/rambollwong/rainbow-iptv-source-filter/internal/logx"
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/m3u8x"
 	"github.com/rambollwong/rainbow-iptv-source-filter/internal/txtx"
 	"github.com/rambollwong/rainbowcat/pool"
@@ -50,18 +49,16 @@ func main() {
 
 	printLogo()
 
-	logx.InitGlobalLogger()
 	defer func() {
 		if err := log.Logger.Flush(); err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "Failed to flush log: %v\n", err)
 		}
 	}()
 
-	log.Info().Msg("Starting rainbow-iptv-source-filter").Done()
-
 	if err := conf.InitConfig(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize config").Done()
 	}
+	log.Info().Msg("Starting rainbow-iptv-source-filter").Done()
 	if conf.Config.CustomUA != "" {
 		httpx.UA = conf.Config.CustomUA
 		log.Info().Msg("Use global custom UA.").Str("ua", conf.Config.CustomUA).Done()

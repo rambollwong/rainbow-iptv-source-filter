@@ -1,7 +1,7 @@
 syntax = "proto3";
 package RainbowIPTVSourceFilter.config;
 
-option go_package = "github.com/ramboll/rainbow-iptv-source-filter/pkg/proto";
+option go_package = "github.com/rambollwong/rainbow-iptv-source-filter/pkg/proto";
 
 message Config {
   repeated string program_list_source_urls = 1;

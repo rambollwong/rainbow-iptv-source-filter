@@ -4,6 +4,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/rambollwong/rainbow-iptv-source-filter/internal/logx"
 	"github.com/rambollwong/rainbow-iptv-source-filter/pkg/proto"
 	"github.com/rambollwong/rainbowlog/log"
 	"github.com/spf13/pflag"
@@ -30,6 +31,7 @@ func InitConfig() error {
 		return err
 	}
 	configPath := viper.GetString("config.path")
+	logx.InitGlobalLogger(configPath)
 	log.Info().Msg("load config file").Str("config.path", configPath).Done()
 	localPath := viper.GetString("local-path")
 	outputPath := viper.GetString("output")
